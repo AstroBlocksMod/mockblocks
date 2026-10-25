@@ -25,7 +25,8 @@ const bannerText = `
 <%= pkg.homepage %>
 <%= pkg.description %>
 
-Copyright 2013–<%= moment().format('YYYY') %>, <%= pkg.author %>
+Copyright 2013-<%= moment().format('YYYY') %>, <%= pkg.author %> and contributors
+Forked from scratchblocks (https://github.com/scratchblocks/scratchblocks)
 @license <%= pkg.license %>
 `.trim()
 
@@ -58,7 +59,7 @@ export default [
     output: {
       file: pkg.main,
       format: "iife",
-      name: "scratchblocks",
+      name: "mockblocks",
       sourcemap: env.prod,
     },
     plugins: [

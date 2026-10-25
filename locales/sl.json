@@ -279,7 +279,7 @@
     "obrni se za %1 stopinj v levo": "MOTION_TURNLEFT",
     "obrni se za %1 stopinj v desno": "MOTION_TURNRIGHT",
     "ko je kliknjena zelena zastavica": "EVENT_WHENFLAGCLICKED",
-    "ustavi": "scratchblocks:end"
+    "ustavi": "mockblocks:end"
   },
   "name": "Slovenščina",
   "percentTranslated": 100

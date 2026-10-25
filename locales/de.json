@@ -279,7 +279,7 @@
     "drehe dich nach links um %1 Grad": "MOTION_TURNLEFT",
     "drehe dich nach rechts um %1 Grad": "MOTION_TURNRIGHT",
     "Wenn die grüne Flagge angeklickt": "EVENT_WHENFLAGCLICKED",
-    "Ende": "scratchblocks:end"
+    "Ende": "mockblocks:end"
   },
   "name": "Deutsch",
   "percentTranslated": 100

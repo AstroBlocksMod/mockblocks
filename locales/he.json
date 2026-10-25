@@ -279,7 +279,7 @@
     "הסתובב שמאל %1 מעלות": "MOTION_TURNLEFT",
     "הסתובב ימינה %1 מעלות": "MOTION_TURNRIGHT",
     "כאשר לוחצים על דגל ירוק": "EVENT_WHENFLAGCLICKED",
-    "סוף": "scratchblocks:end"
+    "סוף": "mockblocks:end"
   },
   "name": "עִבְרִית",
   "percentTranslated": 100

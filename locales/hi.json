@@ -279,7 +279,7 @@
     "%1 डिग्री से बाएं घूम जाए": "MOTION_TURNLEFT",
     "%1 डिग्री से दाएं घूम जाए": "MOTION_TURNRIGHT",
     "जब झंडे को क्लिक किया गया हो": "EVENT_WHENFLAGCLICKED",
-    "अंत": "scratchblocks:end"
+    "अंत": "mockblocks:end"
   },
   "name": "हिंदी",
   "percentTranslated": 100

@@ -281,7 +281,7 @@
     "στρίψε δεξιά %1 μοίρες": "MOTION_TURNRIGHT",
     "στρίψε δεξιόστροφα %1 μοίρες": "MOTION_TURNRIGHT",
     "Όταν στην πράσινη σημαία γίνει κλικ": "EVENT_WHENFLAGCLICKED",
-    "τέλος": "scratchblocks:end"
+    "τέλος": "mockblocks:end"
   },
   "name": "Ελληνικά",
   "percentTranslated": 100

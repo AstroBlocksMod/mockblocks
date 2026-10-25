@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <meta charset="utf8">
 <meta name=viewport content="width=device-width, initial-scale=1">
-<title>scratchblocks dev</title>
+<title>mockblocks dev</title>
 
-<meta name=description content="Use scratchblocks to write pictures of Scratch scripts in forum posts.">
+<meta name=description content="Use mockblocks to make pictures of block-based code, including mockups of blocks that do not exist yet.">
 
 <!--
 <link rel=stylesheet href="https://fonts.googleapis.com/css?family=Noto+Sans:400,700">
@@ -48,11 +48,10 @@ body {
 <!---------------------------------------------------------------------------->
 
 <h1>
-  <a id=title href="/">scratchblocks dev</a>
+  <a id=title href="/">mockblocks dev</a>
   <span>
-    <a target="_blank" href="http://wiki.scratch.mit.edu/wiki/Block_Plugin/Syntax">help</a>
-    <a href="http://github.com/blob8108/scratchblocks2">github</a>
-    <a href="generator/"><b>generate</b></a>
+    <a target="_blank" href="https://en.scratch-wiki.info/wiki/Block_Plugin/Syntax">help</a>
+    <a href="https://github.com/AstroBlocksMod/mockblocks">github</a>
   </span>
 </h1>
 
@@ -72,7 +71,7 @@ body {
 
 <!---------------------------------------------------------------------------->
 
-<script src="build/scratchblocks.min.js"></script>
+<script src="build/mockblocks.min.js"></script>
 <script src="build/translations-all.js"></script>
 
 <script>
@@ -91,14 +90,14 @@ editor.addEventListener('input', function(e) {
 
 var chooseLang = document.getElementById('choose-lang');
 
-var languageCodes = Object.keys(scratchblocks.allLanguages)
+var languageCodes = Object.keys(mockblocks.allLanguages)
 languageCodes.sort()
 languageCodes.forEach(function(code) {
   if (code === "en") return
   var option = document.createElement("option")
   option.value = code
 
-  var language = scratchblocks.allLanguages[code]
+  var language = mockblocks.allLanguages[code]
   option.textContent = language.name && language.altName ? `${language.name} — ${language.altName}` : language.name || language.altName || code
   chooseLang.appendChild(option)
 })
@@ -189,7 +188,7 @@ function objUpdated() {
   /*
   // renderMatching API example
   preview.innerHTML = obj.script;
-  scratchblocks.renderMatching('pre.blocks', {
+  mockblocks.renderMatching('pre.blocks', {
     languages: ['en', obj.lang],
     render: function(doc, cb) {
       doc.render(function(svg) {
@@ -197,8 +196,8 @@ function objUpdated() {
         el.appendChild(svg);
 
         var link = exportSVGLink = document.createElement('a');
-        exportLink.href = scratchblocks.exportSVG(svg);
-        exportLink.setAttribute('download', 'scratchblocks.svg');
+        exportLink.href = mockblocks.exportSVG(svg);
+        exportLink.setAttribute('download', 'mockblocks.svg');
         exportLink.textContent = "Export SVG";
         exportLink.className = 'export-link';
         var p = document.createElement('p');
@@ -211,26 +210,26 @@ function objUpdated() {
   });
   */
 
-  var doc = window.doc = scratchblocks.parse(obj.script, {
+  var doc = window.doc = mockblocks.parse(obj.script, {
     languages: obj.lang ? ['en', obj.lang] : ['en'],
   });
 
-  // doc.translate(scratchblocks.allLanguages['de']);
+  // doc.translate(mockblocks.allLanguages['de']);
 
-  // var doc = window.doc = scratchblocks.fromJSON({
+  // var doc = window.doc = mockblocks.fromJSON({
   //   scripts: eval(obj.script),
   // });
 
-  console.log(scratchblocks.stringify(doc));
-  var docView3HighContrast = scratchblocks.newView(doc, {
+  console.log(mockblocks.stringify(doc));
+  var docView3HighContrast = mockblocks.newView(doc, {
     style: "scratch3-high-contrast",
     scale: 0.675
   });
-  var docView3 = scratchblocks.newView(doc, {
+  var docView3 = mockblocks.newView(doc, {
     style: "scratch3",
     scale: 0.675
   });
-  var docView2 = scratchblocks.newView(doc, {
+  var docView2 = mockblocks.newView(doc, {
     style: "scratch2",
     scale: 1
   });
@@ -244,8 +243,8 @@ function objUpdated() {
   svg3HighContrast.classList.add("scratch3");
   svg3.classList.add("scratch3")
   // Need to add manually if calling View#render (folks, this is why you shouldn't use private API!)
-  svg3HighContrast.classList.add("scratchblocks-style-scratch3-high-contrast")
-  svg3.classList.add("scratchblocks-style-scratch3")
+  svg3HighContrast.classList.add("mockblocks-style-scratch3-high-contrast")
+  svg3.classList.add("mockblocks-style-scratch3")
 
   const getSelectedView = () => {
     switch (exportDropdown.value) {
@@ -261,13 +260,13 @@ function objUpdated() {
   // add export link
   setTimeout(function() {
     if (!exportSVGLink) exportSVGLink = document.createElement('a');
-    exportSVGLink.onclick = () => download("scratchblocks.svg", getSelectedView().exportSVG());
+    exportSVGLink.onclick = () => download("mockblocks.svg", getSelectedView().exportSVG());
     exportSVGLink.textContent = "Export SVG";
     exportSVGLink.className = 'export-link';
     if (!exportSVGLink.isConnected) document.body.appendChild(exportSVGLink);
 
     if (!exportPNGLink) exportPNGLink = document.createElement('a');
-    exportPNGLink.onclick = () => getSelectedView().exportPNG((url) => download("scratchblocks.png", url));
+    exportPNGLink.onclick = () => getSelectedView().exportPNG((url) => download("mockblocks.png", url));
     exportPNGLink.textContent = "Export PNG";
     exportPNGLink.className = 'export-link';
     if (!exportPNGLink.isConnected) document.body.appendChild(exportPNGLink);
@@ -293,7 +292,7 @@ function objUpdated() {
   }, 0);
 
   // update language dropdown
-  var lang = scratchblocks.allLanguages[obj.lang]
+  var lang = mockblocks.allLanguages[obj.lang]
   langStatus.textContent = lang ? `${lang.percentTranslated}%` : "";
 }
 

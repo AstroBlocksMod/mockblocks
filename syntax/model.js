@@ -289,7 +289,7 @@ export class Block {
           text +
           "\n" +
           (Object.keys(lang.aliases).find(
-            key => lang.aliases[key] === "scratchblocks:end",
+            key => lang.aliases[key] === "mockblocks:end",
           ) || "end")
       : this.info.shape === "reporter"
         ? `${diff_text}(${text})`

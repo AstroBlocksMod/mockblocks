@@ -279,7 +279,7 @@
     "girar a la izquierda %1 grados": "MOTION_TURNLEFT",
     "girar a la derecha %1 grados": "MOTION_TURNRIGHT",
     "al presionar bandera verde": "EVENT_WHENFLAGCLICKED",
-    "fin": "scratchblocks:end"
+    "fin": "mockblocks:end"
   },
   "name": "Español (España)",
   "percentTranslated": 100

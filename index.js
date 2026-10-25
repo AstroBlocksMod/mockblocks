@@ -1,7 +1,8 @@
 /*
- * scratchblocks
- * http://scratchblocks.github.io/
+ * mockblocks
+ * https://github.com/AstroBlocksMod/mockblocks
  *
+ * A fork of scratchblocks (http://scratchblocks.github.io/)
  * Copyright 2013-2016, Tim Radvan
  * @license MIT
  * http://opensource.org/licenses/MIT
@@ -56,7 +57,7 @@ export default function (window) {
     const view = newView(doc, options)
     const svg = view.render()
     // Used in high contrast theme
-    svg.classList.add(`scratchblocks-style-${options.style}`)
+    svg.classList.add(`mockblocks-style-${options.style}`)
     return svg
   }
 
@@ -86,16 +87,16 @@ export default function (window) {
     let container
     if (options.inline) {
       container = document.createElement("span")
-      let cls = "scratchblocks scratchblocks-inline"
+      let cls = "mockblocks mockblocks-inline"
       if (doc.scripts[0] && !doc.scripts[0].isEmpty) {
-        cls += ` scratchblocks-inline-${doc.scripts[0].blocks[0].shape}`
+        cls += ` mockblocks-inline-${doc.scripts[0].blocks[0].shape}`
       }
       container.className = cls
       container.style.display = "inline-block"
       container.style.verticalAlign = "middle"
     } else {
       container = document.createElement("div")
-      container.className = "scratchblocks"
+      container.className = "mockblocks"
     }
     container.appendChild(svg)
 
@@ -103,12 +104,10 @@ export default function (window) {
     el.appendChild(container)
   }
 
-  /* Render all matching elements in page to shiny scratch blocks.
+  /* Render all matching elements in page to shiny blocks.
    * Accepts a CSS selector as an argument.
    *
-   *  scratchblocks.renderMatching("pre.blocks");
-   *
-   * Like the old 'scratchblocks2.parse().
+   *  mockblocks.renderMatching("pre.blocks");
    */
   const renderMatching = function (selector, options) {
     selector = selector || "pre.blocks"

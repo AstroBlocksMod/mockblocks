@@ -280,7 +280,7 @@
     "右转 %1 度": "MOTION_TURNRIGHT",
     "当绿旗被点击": "EVENT_WHENFLAGCLICKED",
     "点击绿旗时": "EVENT_WHENFLAGCLICKED",
-    "结束": "scratchblocks:end"
+    "结束": "mockblocks:end"
   },
   "name": "简体中文",
   "percentTranslated": 100

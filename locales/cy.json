@@ -279,7 +279,7 @@
     "troi %1 gradd i'r chwith": "MOTION_TURNLEFT",
     "troi %1 gradd i'r dde": "MOTION_TURNRIGHT",
     "pan fo'r flag werdd yn cael ei glicio": "EVENT_WHENFLAGCLICKED",
-    "diwedd": "scratchblocks:end"
+    "diwedd": "mockblocks:end"
   },
   "name": "Cymraeg",
   "percentTranslated": 100

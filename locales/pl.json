@@ -279,7 +279,7 @@
     "obróć w lewo o %1 stopni": "MOTION_TURNLEFT",
     "obróć w prawo o %1 stopni": "MOTION_TURNRIGHT",
     "kiedy kliknięto zieloną flagę": "EVENT_WHENFLAGCLICKED",
-    "koniec": "scratchblocks:end"
+    "koniec": "mockblocks:end"
   },
   "name": "Polski",
   "percentTranslated": 100

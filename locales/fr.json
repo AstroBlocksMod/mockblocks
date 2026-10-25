@@ -279,7 +279,7 @@
     "tourner gauche de %1 degrés": "MOTION_TURNLEFT",
     "tourner droite de %1 degrés": "MOTION_TURNRIGHT",
     "quand le drapeau vert pressé": "EVENT_WHENFLAGCLICKED",
-    "fin": "scratchblocks:end"
+    "fin": "mockblocks:end"
   },
   "name": "Français",
   "percentTranslated": 100

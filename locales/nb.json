@@ -279,7 +279,7 @@
     "vend venstre %1 grader": "MOTION_TURNLEFT",
     "vend høyre %1 grader": "MOTION_TURNRIGHT",
     "når grønt flagg klikkes": "EVENT_WHENFLAGCLICKED",
-    "slutt": "scratchblocks:end"
+    "slutt": "mockblocks:end"
   },
   "name": "Norsk Bokmål",
   "percentTranslated": 100

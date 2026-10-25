@@ -280,7 +280,7 @@
     "fordulj jobbra %1 fokot": "MOTION_TURNRIGHT",
     "zászlóra kattintáskor": "EVENT_WHENFLAGCLICKED",
     "a zászlóra kattintáskor": "EVENT_WHENFLAGCLICKED",
-    "vége": "scratchblocks:end"
+    "vége": "mockblocks:end"
   },
   "name": "Magyar",
   "percentTranslated": 100

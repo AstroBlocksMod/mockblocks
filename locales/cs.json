@@ -280,7 +280,7 @@
     "otoč se o %1 stupňů doleva": "MOTION_TURNLEFT",
     "otoč se o %1 stupňů doprava": "MOTION_TURNRIGHT",
     "po kliknutí na zelenou vlajku": "EVENT_WHENFLAGCLICKED",
-    "konec": "scratchblocks:end"
+    "konec": "mockblocks:end"
   },
   "name": "Česky",
   "percentTranslated": 100

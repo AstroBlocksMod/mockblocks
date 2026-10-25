@@ -1,20 +1,20 @@
 {
-  "name": "scratchblocks",
-  "version": "3.7.1",
-  "description": "Make pictures of Scratch blocks from text.",
+  "name": "mockblocks",
+  "version": "0.1.0",
+  "description": "Make pictures of block-based code from text, including mockups of blocks that do not exist yet.",
   "license": "MIT",
   "author": "Tim Radvan",
-  "homepage": "https://scratchblocks.github.io/",
+  "homepage": "https://github.com/AstroBlocksMod/mockblocks",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/scratchblocks/scratchblocks.git"
+    "url": "git+https://github.com/AstroBlocksMod/mockblocks.git"
   },
   "bugs": {
-    "url": "https://github.com/scratchblocks/scratchblocks/issues"
+    "url": "https://github.com/AstroBlocksMod/mockblocks/issues"
   },
   "type": "module",
-  "main": "build/scratchblocks.min.js",
-  "module": "build/scratchblocks.min.es.js",
+  "main": "build/mockblocks.min.js",
+  "module": "build/mockblocks.min.es.js",
   "directories": {
     "test": "tests"
   },
@@ -55,7 +55,9 @@
     "scratch-l10n": "^6.1.86"
   },
   "keywords": [
-    "scratch"
+    "scratch",
+    "blocks",
+    "mockup"
   ],
   "lint-staged": {
     "package.json": [
