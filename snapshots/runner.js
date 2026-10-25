@@ -2,17 +2,11 @@ import path from "path"
 
 const tests = []
 
-export function test(style, name, source, lang) {
-  tests.push({
-    style,
-    name,
-    source,
-    lang: lang || "en",
-  })
-
-  if (style === "scratch3") {
+// Every snapshot is rendered in both the original and the high contrast style.
+export function test(name, source, lang) {
+  for (const style of ["scratch3", "scratch3-high-contrast"]) {
     tests.push({
-      style: "scratch3-high-contrast",
+      style,
       name,
       source,
       lang: lang || "en",

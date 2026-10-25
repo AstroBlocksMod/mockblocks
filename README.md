@@ -30,7 +30,7 @@ Then call `mockblocks.renderMatching` after the page has loaded, just before the
 ```html
 <script>
 mockblocks.renderMatching('pre.blocks', {
-  style:     'scratch3',   // Optional, defaults to 'scratch2'.
+  style:     'scratch3',   // Optional. 'scratch3' (default) or 'scratch3-high-contrast'.
   languages: ['en', 'de'], // Optional, defaults to ['en'].
   scale: 1,                // Optional, defaults to 1
 });

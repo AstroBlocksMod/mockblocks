@@ -1,438 +1,8 @@
 import { test } from "./runner.js"
 
-// Scratch 2, English
-
-test(
-  "scratch2",
-  "en-motion",
-  `
-
-// Motion
-
-move (10) steps
-turn cw (15) degrees
-turn right (15) degrees
-turn ↻ (15) degrees
-turn ccw (15) degrees
-turn left (15) degrees
-turn ↺ (15) degrees
-
-point in direction (90 v)
-point towards [ v]
-
-go to x: (0) y: (0)
-go to [mouse-pointer v]
-glide (1) secs to x: (0) y: (0)
-
-change x by (10)
-set x to (0)
-change y by (10)
-set y to (0)
-
-if on edge, bounce
-
-set rotation style [left-right v]
-
-(x position)
-(y position)
-(direction)
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-looks",
-  `
-
-// Looks
-
-say [Hello!] for (2) secs
-say [Hello!]
-think [Hmm...] for (2) secs
-think [Hmm...]
-
-show
-hide
-
-switch costume to [costume1 v]
-next costume
-switch backdrop to [backdrop1 v]
-
-change [color v] effect by (25)
-set [color v] effect to (0)
-clear graphic effects
-
-change size by (10)
-set size to (100)%
-
-go to front
-go back (1) layers
-
-(costume #)
-(backdrop name)
-(size)
-
-// (Stage-specific)
-
-switch backdrop to [backdrop1 v] and wait
-next backdrop
-
-(backdrop #)
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-sound",
-  `
-
-// Sound
-
-play sound [pop v]
-play sound [pop v] until done
-stop all sounds
-
-play drum (1 v) for (0.2) beats
-rest for (0.2) beats
-
-play note (60 v) for (0.5) beats
-set instrument to (1 v)
-
-change volume by (-10)
-set volume to (100)%
-(volume)
-
-change tempo by (20)
-set tempo to (60) bpm
-(tempo)
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-pen",
-  `
-
-// Pen
-
-clear
-
-stamp
-
-pen down
-pen up
-
-set pen color to [#f0f]
-change pen color by (10)
-set pen color to (0)
-
-change pen shade by (10)
-set pen shade to (50)
-
-change pen size by (1)
-set pen size to (1)
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-data",
-  `
-
-// Variables
-
-set [var v] to [0]
-change [var v] by (1)
-show variable [var v]
-hide variable [var v]
-
-// List
-
-add [thing] to [list v]
-
-delete (1 v) of [list v]
-insert [thing] at (1 v) of [list v]
-replace item (1 v) of [list v] with [thing]
-
-(item (1 v) of [list v])
-(length of [list v])
-<[list v] contains [thing]>
-
-show list [list v]
-hide list [list v]
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-events",
-  `
-
-// Events
-
-when gf clicked
-when green flag clicked
-when flag clicked
-when ⚑ clicked
-when [space v] key pressed
-when this sprite clicked
-when backdrop switches to [backdrop1 v]
-
-when [loudness v] > (10)
-
-when I receive [message1 v]
-broadcast [message1 v]
-broadcast [message1 v] and wait
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-control",
-  `
-
-// Control
-
-wait (1) secs
-
-repeat (10)
-end
-
-forever
-end
-
-if <> then
-end
-
-if <> then
-else
-end
-
-wait until <>
-
-repeat until <>
-end
-
-// caps!
-
-stop [all v]
-
-stop [this script v]
-
-// stack
-
-stop [other scripts in sprite v]
-
-stop [other scripts in stage v]
-
-when I start as a clone
-create clone of [myself v]
-delete this clone
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-sensing",
-  `
-
-// Sensing
-
-<touching [ v]?>
-<touching color [#f0f]?>
-<color [#f0f] is touching [#0f0]?>
-(distance to [ v])
-
-ask [What's your name?] and wait
-(answer)
-
-<key [space v] pressed?>
-<mouse down?>
-(mouse x)
-(mouse y)
-
-(loudness)
-
-(video [motion v] on [this sprite v])
-turn video [on v]
-set video transparency to (50)%
-
-(timer)
-reset timer
-
-([x position v] of [Sprite1 v])
-
-(current [minute v])
-(days since 2000)
-(username)
-(user id)
-
-
-`,
-)
-
-test(
-  "scratch2",
-  "en-operators",
-  `
-
-// Operators
-
-(() + ())
-(() - ())
-(() * ())
-(() / ())
-
-(pick random (1) to (10))
-
-<[] < []>
-<[] = []>
-<[] > []>
-&lt;[] &lt; []&gt;
-&lt;[] &gt; []&gt;
-
-<<> and <>>
-<<> or <>>
-<not <>>
-
-(join [hello ] [world])
-(letter (1) of [world])
-(length of [world])
-
-(() mod ())
-(round ())
-
-([sqrt v] of (9))
-
-`,
-)
-/* Scratch 2.0 extension support is not good
-test(
-  "scratch2",
-  "en-extensions",
-  `
-
-// PicoBoard
-
-when [button pressed v]
-
-when [slider v] [> v] (50)
-
-<sensor [button pressed v]?
-
-([slider v] sensor value)
-
-// Lego WeDo 1.0
-
-turn [motor v] on for (1) secs
-
-turn [motor v] on
-
-turn [motor v] off
-
-set [motor v] power to (100)
-
-set [motor v] direction to [this way v]
-
-when distance [< v] (20)
-
-when tilt [= v] (20)
-
-(tilt)
-
-// Lego WeDo 2.0
-
-turn [motor v] on for (1) seconds
-
-turn [motor v] on
-
-turn [motor v] off
-
-set [motor v] power to (100)
-
-set [motor v] direction to [this way v]
-
-set light color to (50)
-
-play note (60 v) for (0.5) seconds
-
-when distance [< v] (50)
-
-when tilted
-
-(distance)
-
-(tilt [up-down v])
-
-`
-)
-*/
-
-test(
-  "scratch2",
-  "en-obsolete",
-  `
-
-// Obsolete Scratch 1.4 blocks:
-
-
-// Looks
-
-switch to costume [costume1 v]
-
-switch to background [background1 v]
-next background
-(background #)
-
-
-
-// Control
-
-if <>
-end
-
-forever if <>
-end
-
-stop script
-stop all
-
-
-
-// Events
-
-when Sprite1 clicked
-
-
-
-// Sensing
-
-<loud?>
-
-
-
-// Grey
-
-. . .
-...
-…
-
-`,
-)
-
-/*****************************************************************************/
-
 // Scratch 3, English
 
 test(
-  "scratch3",
   "en-motion",
   `
 
@@ -466,7 +36,6 @@ set rotation style [left-right v]
 )
 
 test(
-  "scratch3",
   "en-looks",
   `
 
@@ -503,7 +72,6 @@ go [forward v] (1) layers
 )
 
 test(
-  "scratch3",
   "en-sound",
   `
 
@@ -526,7 +94,6 @@ volume
 )
 
 test(
-  "scratch3",
   "en-events",
   `
 
@@ -547,7 +114,6 @@ broadcast (message1 v) and wait
 )
 
 test(
-  "scratch3",
   "en-control",
   `
 
@@ -583,7 +149,6 @@ delete this clone
 )
 
 test(
-  "scratch3",
   "en-sensing",
   `
 
@@ -623,7 +188,6 @@ reset timer
 )
 
 test(
-  "scratch3",
   "en-operators",
   `
 
@@ -658,7 +222,6 @@ test(
 )
 
 test(
-  "scratch3",
   "en-variables",
   `
 
@@ -693,7 +256,6 @@ hide list [list v]
 )
 
 test(
-  "scratch3",
   "en-custom",
   `
 
@@ -707,7 +269,6 @@ define foo (num) if <bool>
 )
 
 test(
-  "scratch3",
   "en-pen",
   `
 
@@ -732,7 +293,6 @@ set pen size to (1)
 )
 
 test(
-  "scratch3",
   "en-music",
   `
 
@@ -750,7 +310,6 @@ change tempo by (20)
 )
 
 test(
-  "scratch3",
   "en-video",
   `
 
@@ -765,7 +324,6 @@ set video transparency to (50)
 )
 
 test(
-  "scratch3",
   "en-extensions",
   `
 // Text-to-Sppech
@@ -845,7 +403,6 @@ when a face is detected
 )
 
 test(
-  "scratch3",
   "en-cat",
   `
 move (10) steps
@@ -862,7 +419,6 @@ move (10) steps
 // See #472, #473
 
 test(
-  "scratch3",
   "en-color-regression",
   `
 test <> [item v] ()::motion
@@ -886,7 +442,6 @@ test <> [item v] ()::grey
 // Scratch 3, German
 
 test(
-  "scratch3",
   "de-motion",
   `
 
@@ -923,7 +478,6 @@ setze Drehtyp auf [links-rechts v]
 )
 
 test(
-  "scratch3",
   "de-looks",
   `
 
@@ -965,7 +519,6 @@ gehe (1) Ebenen [nach vorne v]
 // the translation files, wut
 
 test(
-  "scratch3",
   "de-sound",
   `
 
@@ -990,7 +543,6 @@ setze Lautstärke auf (100) %
 )
 
 test(
-  "scratch3",
   "de-events",
   `
 
@@ -1012,7 +564,6 @@ sende (Nachricht1 v) an alle und warte
 )
 
 test(
-  "scratch3",
   "de-control",
   `
 
@@ -1049,7 +600,6 @@ lösche diesen Klon
 )
 
 test(
-  "scratch3",
   "de-sensing",
   `
 
@@ -1087,7 +637,6 @@ setze Stoppuhr zurück
 )
 
 test(
-  "scratch3",
   "de-operators",
   `
 
@@ -1124,7 +673,6 @@ test(
 )
 
 test(
-  "scratch3",
   "de-variables",
   `
 
@@ -1160,7 +708,6 @@ verstecke Liste [list v]
 )
 
 test(
-  "scratch3",
   "de-custom",
   `
 
@@ -1175,7 +722,6 @@ Definiere foo (num) if <bool>
 )
 
 test(
-  "scratch3",
   "de-pen",
   `
 
@@ -1201,7 +747,6 @@ setze Stiftdicke auf (1)
 )
 
 test(
-  "scratch3",
   "de-music",
   `
 
@@ -1221,7 +766,6 @@ setze tempo auf (60)
 )
 
 test(
-  "scratch3",
   "de-video",
   `
 
@@ -1239,7 +783,6 @@ setze Video-Transparenz auf (50)
 )
 
 test(
-  "scratch3",
   "de-extensions",
   `
 // Text zu Sprache

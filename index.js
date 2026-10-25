@@ -19,31 +19,26 @@ import {
   Script,
   Document,
 } from "./syntax/index.js"
-import * as scratch2 from "./scratch2/index.js"
 import * as scratch3 from "./scratch3/index.js"
 
 export default function (window) {
   const document = window.document
 
-  scratch2.init(window)
   scratch3.init(window)
 
   function appendStyles() {
-    document.head.appendChild(scratch2.makeStyle())
     document.head.appendChild(scratch3.makeStyle())
   }
 
   function newView(doc, options) {
     options = {
-      style: "scratch2",
+      style: "scratch3",
       ...options,
     }
 
     options.scale = options.scale || 1
 
-    if (options.style === "scratch2") {
-      return scratch2.newView(doc, options)
-    } else if (/^scratch3($|-)/.test(options.style)) {
+    if (/^scratch3($|-)/.test(options.style)) {
       return scratch3.newView(doc, options)
     }
 
@@ -113,7 +108,7 @@ export default function (window) {
     selector = selector || "pre.blocks"
     options = {
       // Default values for the options
-      style: "scratch2",
+      style: "scratch3",
       inline: false,
       languages: ["en"],
       scale: 1,

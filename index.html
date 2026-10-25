@@ -229,17 +229,11 @@ function objUpdated() {
     style: "scratch3",
     scale: 0.675
   });
-  var docView2 = mockblocks.newView(doc, {
-    style: "scratch2",
-    scale: 1
-  });
   var svg3HighContrast = docView3HighContrast.render();
   var svg3 = docView3.render();
-  var svg2 = docView2.render();
   preview.innerHTML = "";
   preview.appendChild(svg3HighContrast);
   preview.appendChild(svg3);
-  preview.appendChild(svg2);
   svg3HighContrast.classList.add("scratch3");
   svg3.classList.add("scratch3")
   // Need to add manually if calling View#render (folks, this is why you shouldn't use private API!)
@@ -250,8 +244,6 @@ function objUpdated() {
     switch (exportDropdown.value) {
       case "3-high-contrast":
         return docView3HighContrast;
-      case "2":
-        return docView2;
       default:
         return docView3;
     }
@@ -281,10 +273,6 @@ function objUpdated() {
       exportDropdown.appendChild(Object.assign(document.createElement("option"), {
         label: "3.0 (high contrast)",
         value: "3-high-contrast",
-      }));
-      exportDropdown.appendChild(Object.assign(document.createElement("option"), {
-        label: "2.0",
-        value: "2",
       }));
       exportDropdown.className = 'export-link';
     }
