@@ -279,7 +279,7 @@
     "gira para a esquerda %1 º": "MOTION_TURNLEFT",
     "gira para a direita %1 º": "MOTION_TURNRIGHT",
     "Quando alguém clicar na bandeira verde": "EVENT_WHENFLAGCLICKED",
-    "fim": "scratchblocks:end"
+    "fim": "mockblocks:end"
   },
   "name": "Português",
   "percentTranslated": 100

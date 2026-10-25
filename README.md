@@ -1,55 +1,23 @@
-Make pictures of Scratch blocks from text.
+# mockblocks
 
-[![Screenshot](https://scratchblocks.github.io/screenshot.png)](https://scratchblocks.github.io/#when%20flag%20clicked%0Aclear%0Aforever%0Apen%20down%0Aif%20%3C%3Cmouse%20down%3F%3E%20and%20%3Ctouching%20%5Bmouse-pointer%20v%5D%3F%3E%3E%20then%0Aswitch%20costume%20to%20%5Bbutton%20v%5D%0Aelse%0Aadd%20(x%20position)%20to%20%5Blist%20v%5D%0Aend%0Amove%20(foo)%20steps%0Aturn%20ccw%20(9)%20degrees)
+Make pictures of block-based code from text, including mockups of blocks that do not exist yet.
 
-**[Try it out!](https://scratchblocks.github.io/)**
+mockblocks is a fork of [scratchblocks](https://github.com/scratchblocks/scratchblocks). It keeps the scratchblocks text syntax and the Scratch 3 look, and adds a way to define new blocks, categories and shapes so you can draw mockups for your own block language. Changes made here are not sent back upstream.
 
----
-
-**scratchblocks** is used to write Scratch scripts:
-
-- in [Scratch Forum](https://scratch.mit.edu/discuss/topic/14772/) posts
-- in [Scratch Wiki](https://en.scratch-wiki.info/wiki/Block_Plugin) articles
-- in the [Code Club](https://www.codeclub.org.uk) project guides
-
-It's MIT licensed, so you can use it in your projects.
-(But do send me a link [on Twitter](https://twitter.com/blob8108)!)
-
-For the full guide to the syntax, see [the wiki](https://en.scratch-wiki.info/wiki/Block_Plugin/Syntax).
+For the base syntax, see [the scratchblocks syntax guide](https://en.scratch-wiki.info/wiki/Block_Plugin/Syntax).
 
 # Usage
 
-## MediaWiki
-
-Use [the MediaWiki plugin](https://github.com/InternationalScratchWiki/mw-ScratchBlocks4).
-(This is what the [Scratch Wiki](https://en.scratch-wiki.info/wiki/Block_Plugin) uses.)
-
-## WordPress
-
-I found [a WordPress plugin](https://github.com/tkc49/scratchblocks-for-wp).
-It might work for you; I haven't tried it.
-
-## Pandoc
-
-Code Club use their own [lesson_format](https://github.com/CodeClub/lesson_format) tool to generate the PDF versions of their project guides.
-It uses the [pandoc_scratchblocks](https://github.com/CodeClub/pandoc_scratchblocks) plugin they wrote to make pictures of Scratch scripts.
-
-This would probably be a good way to write a Scratch book.
-
 ## HTML
 
-You'll need to include a copy of the scratchblocks JS file on your webpage.
-There are a few ways of getting one:
-
-* Download it from the <https://github.com/scratchblocks/scratchblocks/releases> page
-* If you have a fancy JS build system, you might like to include the `scratchblocks` package from NPM
-* You could clone this repository and build it yourself using Node 16.14.0+ (`npm run build`).
+Include the mockblocks JS file on your page. You can build it yourself with Node 24+ (`npm run build`), which writes `build/mockblocks.min.js`.
 
 ```html
-<script src="scratchblocks-min.js"></script>
+<script src="mockblocks.min.js"></script>
 ```
 
-The convention is to write scratchblocks inside `pre` tags with the class `blocks`:
+Write blocks inside `pre` tags with the class `blocks`:
+
 ```html
 <pre class="blocks">
 when flag clicked
@@ -57,126 +25,188 @@ move (10) steps
 </pre>
 ```
 
-You then need to call `scratchblocks.renderMatching` after the page has loaded.
-Make sure this appears at the end of the page (just before the closing `</body>` tag):
-```js
+Then call `mockblocks.renderMatching` after the page has loaded, just before the closing `</body>` tag:
+
+```html
 <script>
-scratchblocks.renderMatching('pre.blocks', {
-  style:     'scratch3',   // Optional, defaults to 'scratch2'.
+mockblocks.renderMatching('pre.blocks', {
+  style:     'scratch3',   // Optional. 'scratch3' (default) or 'scratch3-high-contrast'.
   languages: ['en', 'de'], // Optional, defaults to ['en'].
   scale: 1,                // Optional, defaults to 1
 });
 </script>
 ```
-The `renderMatching()` function takes a CSS-style selector for the elements that contain scratchblocks code: we use `pre.blocks` to target `pre` tags with the class `blocks`.
 
-The `style` option controls how the blocks appear, either the Scratch 2 or Scratch 3 style is supported.
+`renderMatching()` takes a CSS selector for the elements that contain block code.
 
 ### Inline blocks
 
-You might also want to use blocks "inline", inside a paragraph:
+To use blocks inside a paragraph:
+
 ```html
 I'm rather fond of the <code class="b">stamp</code> block in Scratch.
 ```
 
-To allow this, make a second call to `renderMatching` using the `inline` argument.
-```js
-<script>
-scratchblocks.renderMatching("pre.blocks", ...)
+Make a second call to `renderMatching` with the `inline` option:
 
-scratchblocks.renderMatching("code.b", {
+```html
+<script>
+mockblocks.renderMatching("pre.blocks", ...)
+
+mockblocks.renderMatching("code.b", {
   inline: true,
   // Repeat `style` and `languages` options here.
 });
 </script>
 ```
-This time we use `code.b` to target `code` blocks with the class `b`.
 
 ### Translations
 
-If you want to use languages other than English, you'll need to include a second JS file that contains translations.
-The releases page includes two options; you can pick one:
+For languages other than English, include a second JS file with translations. The build writes two options:
 
-* `translations.js` includes a limited set of languages, as seen on the Scratch Forums
-* `translations-all.js` includes every language that Scratch supports.
+* `build/translations.js` includes a limited set of languages
+* `build/translations-all.js` includes every language that Scratch supports
 
-The translations files are hundreds of kilobytes in size, so to keep your page bundle size down you might like to build your own file with just the languages you need.
+The translation files are hundreds of kilobytes, so you might like to build your own with just the languages you need:
 
-For example, a translations file that just loads the German language (ISO code `de`) would look something like this:
 ```js
-window.scratchblocks.loadLanguages({
+window.mockblocks.loadLanguages({
     de: <contents of locales/de.json>
-})
-```
-
-If you're using a JavaScript bundler you should be able to build your own translations file by calling `require()` with the path to the locale JSON file.
-This requires your bundler to allow importing JSON files as JavaScript.
-```js
-window.scratchblocks.loadLanguages({
-    de: require('scratchblocks/locales/de.json'),
 })
 ```
 
 ## NPM
 
-The `scratchblocks` package is published on NPM, and you can use it with browserify and other bundlers, if you're into that sort of thing.
-
-Once you've got browserify set up to build a client-side bundle from your app
-code, you can just add `scratchblocks` to your dependencies, and everything
-should Just Work™.
-
 ```js
-var scratchblocks = require('scratchblocks');
-scratchblocks.renderMatching('pre.blocks');
+import mockblocks from "mockblocks";
+mockblocks.renderMatching('pre.blocks');
 ```
 
-## ESM Support
-Since version 3.6.0, scratchblocks can be properly loaded as an ESM module. The ESM version, instead of defining `window.scratchblocks`, default-exports the `scratchblocks` object. Similarly, the JavaScript translation files default-exports a function to load the translations.
+# Mockups
+
+The point of mockblocks is drawing blocks that do not exist yet. There are two ways to do that: overrides on a single line, and packs that define a whole block set.
+
+## Overrides
+
+Anything after `::` on a line changes how that block looks. mockblocks keeps the scratchblocks overrides (a category name, a hex color, `loop`, `+` and `-`) and adds shape words that can be combined:
+
+| word | effect |
+|---|---|
+| `hat`, `cat`, `define` | the top edge |
+| `c` | the block has a body, closed with `end` (`else` works too) |
+| `cap` | nothing can go below the block |
+| `stack` | back to a plain block |
+| `reporter`, `boolean`, `ring` | round or pointed blocks |
+
+So a class block with methods inside it is just:
+
+```
+class [Player] :: hat c #4c6ef5
+  method [jump] :: define c
+    change y by (10)
+  end
+end
+```
+
+A hex color gives the block the same three shades a built-in category has (slightly darker for dropdowns, darker again for the outline and empty boolean slots), in both the original and the high contrast theme.
+
+## Packs
+
+For a block set you use more than once, register a pack. A pack lists categories (with colors), optional shapes, and blocks. Once registered, the blocks are recognized by their text with no overrides needed:
 
 ```js
-import scratchblocks from "./scratchblocks-es-min.js";
-import loadTranslations from "./translations-all-es.js";
-loadTranslations(scratchblocks);
+mockblocks.registerPack({
+  name: "oop",
+  categories: {
+    classes: "#4c6ef5",
+    // or explicit shades for both themes:
+    // classes: { primary, secondary, tertiary, highContrast: { primary, secondary, tertiary } }
+  },
+  shapes: {
+    "class-hat": { top: "hat", mouth: true },
+  },
+  blocks: [
+    { id: "oop.class", spec: "class %1", inputs: ["%s"], shape: "class-hat", category: "classes" },
+    { id: "oop.method", spec: "method %1", inputs: ["%s"], shape: "define c", category: "classes" },
+    { id: "oop.new", spec: "new %1", inputs: ["%s"], shape: "reporter", category: "classes" },
+  ],
+  aliases: {
+    "create %1": "oop.new",
+  },
+})
+```
 
-// window.scratchblocks is NOT available!
+```
+class [Player]
+  method [jump]
+    change y by (10)
+  end
+end
+
+say (new [Player])
+```
+
+A block's `shape` is a shape name (`stack`, `hat`, `cap`, `c-block`, `reporter`, `boolean`, `ring`, or one from `shapes`), shape words such as `"hat c"`, or a feature object: `{ top: "notch" | "hat" | "cat" | "define", bottom: "puzzle" | "flat", mouth: true | false, output: null | "round" | "hex" }`.
+
+### Bundled packs
+
+`mockblocks.packs.jscratch` has draft blocks for the advanced language features on the [jScratch roadmap](https://github.com/AstroBlocksMod/jScratch/blob/main/docs/roadmap.md): functions (`return`, `local`), macros (`define macro`) and objects (`class`, `field`, `method`, `new`, `this`, `field of`, `set field of`, `call on`). jScratch has not designed these blocks yet, so treat the wording as a placeholder. It is not registered by default:
+
+```js
+mockblocks.registerPack(mockblocks.packs.jscratch)
+```
+
+### Writing a pack
+
+`spec` uses `%1`, `%2` and so on for inputs, with the input kinds in `inputs` (`%s` string, `%n` number, `%b` boolean, `%m.name` dropdown). Registration is all or nothing: an invalid category, shape or block throws and nothing is registered. The built-in Scratch blocks are the `scratch` pack, available as `mockblocks.packs.scratch`.
+
+## ESM
+
+The ESM build (`build/mockblocks.min.es.js`) default-exports the `mockblocks` object instead of defining `window.mockblocks`. The ESM translation files default-export a function that loads the translations:
+
+```js
+import mockblocks from "./mockblocks.min.es.js";
+import loadTranslations from "./translations-all-es.js";
+loadTranslations(mockblocks);
 ```
 
 # Languages
 
 To update the translations:
+
 ```sh
 npm upgrade scratch-l10n
 npm run locales
 ```
 
-## Adding a language
-
-Each language **requires** some [additional words](https://github.com/scratchblocks/scratchblocks/blob/master/locales-src/extra_aliases.js) which aren't in Scratch itself (mainly the words used for the flag and arrow images).
-I'd be happy to accept pull requests for those! You'll need to rebuild the translations with `npm run locales` after editing the aliases.
+Each language needs some [additional words](locales-src/extra_aliases.js) which aren't in Scratch itself (mainly the words used for the flag and arrow images). Rebuild the translations with `npm run locales` after editing the aliases.
 
 # Development
-
-This should set you up and start a http-server for development:
 
 ```
 npm install
 npm start
 ```
 
-Then open <http://localhost:8000/> :-)
+Then open <http://localhost:8000/>.
 
-For more details, see [`CONTRIBUTING.md`](https://github.com/scratchblocks/scratchblocks/blob/master/.github/CONTRIBUTING.md).
+Other useful commands:
 
+```
+npm test            # parser and stringify tests
+npm run snapshots   # render the snapshot scripts to PNG with a headless browser
+npm run lint
+npm run fmt
+```
+
+See [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) for more.
 
 # Credits
 
-Many, many thanks to the [contributors](https://github.com/scratchblocks/scratchblocks/graphs/contributors)!
+mockblocks is built on scratchblocks. Many thanks to the [scratchblocks contributors](https://github.com/scratchblocks/scratchblocks/graphs/contributors)!
 
-* Authored by [tjvr](https://github.com/tjvr)
-* Maintained by tjvr and [apple502j](https://github.com/apple502j)
+* scratchblocks was authored by [tjvr](https://github.com/tjvr) and maintained by tjvr and [apple502j](https://github.com/apple502j)
 * Icons derived from [Scratch Blocks](https://github.com/scratchfoundation/scratch-blocks) (Apache License 2.0)
-* Scratch 2 SVG proof-of-concept, shapes & filters by [as-com](https://github.com/as-com)
-* Anna helped with a formula, and pointed out that I can't read graphs
 * JSO designed the syntax and wrote the original [Block Plugin](https://en.scratch-wiki.info/wiki/Block_Plugin_\(1.4\))
 * Help with translation code from [joooni](https://scratch.mit.edu/users/joooni/)
 * Block translations from the [scratch-l10n repository](https://github.com/scratchfoundation/scratch-l10n/)

@@ -279,7 +279,7 @@
     "rotește la stânga %1 grade": "MOTION_TURNLEFT",
     "rotește la dreapta %1 grade": "MOTION_TURNRIGHT",
     "când se face click pe stegulețul verde": "EVENT_WHENFLAGCLICKED",
-    "terminare": "scratchblocks:end"
+    "terminare": "mockblocks:end"
   },
   "name": "Română",
   "percentTranslated": 100

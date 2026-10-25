@@ -4,7 +4,6 @@ import pkg from "./package.json" with { type: "json" }
 import serve from "rollup-plugin-serve"
 import license from "rollup-plugin-license"
 import terser from "@rollup/plugin-terser"
-import csso from "./locales-src/rollup-optimized-css-text.js"
 
 let { buildTarget } = process.env
 
@@ -25,14 +24,12 @@ const bannerText = `
 <%= pkg.homepage %>
 <%= pkg.description %>
 
-Copyright 2013–<%= moment().format('YYYY') %>, <%= pkg.author %>
+Copyright 2013-<%= moment().format('YYYY') %>, <%= pkg.author %> and contributors
+Forked from scratchblocks (https://github.com/scratchblocks/scratchblocks)
 @license <%= pkg.license %>
 `.trim()
 
-const commonPreBabelOperations = isLocale => [
-  isLocale ? undefined : csso({ minify: env.prod }),
-  isLocale ? json() : undefined,
-]
+const commonPreBabelOperations = isLocale => [isLocale ? json() : undefined]
 
 const commonPostBabelOperations = isModule => [
   env.prod &&
@@ -58,7 +55,7 @@ export default [
     output: {
       file: pkg.main,
       format: "iife",
-      name: "scratchblocks",
+      name: "mockblocks",
       sourcemap: env.prod,
     },
     plugins: [

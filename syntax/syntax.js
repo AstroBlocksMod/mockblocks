@@ -28,6 +28,7 @@ import {
   blockName,
   aliasCategories,
 } from "./blocks.js"
+import { resolveShape } from "./shapes.js"
 
 function paintBlock(info, children, languages) {
   let overrides = []
@@ -60,10 +61,13 @@ function paintBlock(info, children, languages) {
       info.language = lang
       info.isRTL = rtlLanguages.includes(lang.code)
 
+      // A plain line takes the shape of the block it matched, and a reporter
+      // becomes a ring if that is what it matched.
+      const parsed = resolveShape(info.shape)
       if (
-        type.shape === "ring"
-          ? info.shape === "reporter"
-          : info.shape === "stack"
+        resolveShape(type.shape).ring
+          ? parsed.name === "reporter"
+          : parsed.name === "stack"
       ) {
         info.shape = type.shape
       }
@@ -450,7 +454,7 @@ function parseLines(code, languages) {
     const block = makeBlock("reporter", children)
 
     // rings
-    if (block.info && block.info.shape === "ring") {
+    if (block.info && block.isRing) {
       const first = block.children[0]
       if (
         first &&
@@ -662,7 +666,7 @@ function parseScripts(getLine) {
 
     if (b.hasScript) {
       while (true) {
-        const blocks = pMouth()
+        const blocks = pMouth(b)
         b.children.push(new Script(blocks))
         if (line && line.isElse) {
           for (const child of line.children) {
@@ -680,7 +684,7 @@ function parseScripts(getLine) {
     return b
   }
 
-  function pMouth() {
+  function pMouth(parent) {
     const blocks = []
     while (line) {
       if (line === "NL") {
@@ -688,6 +692,12 @@ function parseScripts(getLine) {
         continue
       }
       if (!line.isCommand) {
+        return blocks
+      }
+      // A hat closes an unterminated C block and starts a new script, as in
+      // Scratch. Only a hat that has a body itself, such as a class, can
+      // hold other hats.
+      if (line.isHat && !parent.isHat) {
         return blocks
       }
 
@@ -756,10 +766,7 @@ function recogniseStuff(scripts) {
       }
 
       // custom blocks
-      if (
-        block.info.shape === "define-hat" ||
-        block.info.shape === "define-cat"
-      ) {
+      if (block.isDefine) {
         // There should be exactly one `outline` child, added in paintBlock.
         const outline = block.children.find(child => child.isOutline)
         if (!outline) {

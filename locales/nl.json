@@ -279,7 +279,7 @@
     "draai %1 graden naar links": "MOTION_TURNLEFT",
     "draai %1 graden naar rechts": "MOTION_TURNRIGHT",
     "wanneer groene vlag wordt aangeklikt": "EVENT_WHENFLAGCLICKED",
-    "einde": "scratchblocks:end"
+    "einde": "mockblocks:end"
   },
   "name": "Nederlands",
   "percentTranslated": 100

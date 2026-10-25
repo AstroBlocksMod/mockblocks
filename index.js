@@ -1,7 +1,8 @@
 /*
- * scratchblocks
- * http://scratchblocks.github.io/
+ * mockblocks
+ * https://github.com/AstroBlocksMod/mockblocks
  *
+ * A fork of scratchblocks (http://scratchblocks.github.io/)
  * Copyright 2013-2016, Tim Radvan
  * @license MIT
  * http://opensource.org/licenses/MIT
@@ -10,6 +11,11 @@ import {
   parse,
   allLanguages,
   loadLanguages,
+  registerPack,
+  registeredPacks,
+  onRegistryChange,
+  scratchPack,
+  jscratchPack,
   Label,
   Icon,
   Input,
@@ -18,31 +24,39 @@ import {
   Script,
   Document,
 } from "./syntax/index.js"
-import * as scratch2 from "./scratch2/index.js"
 import * as scratch3 from "./scratch3/index.js"
 
 export default function (window) {
   const document = window.document
 
-  scratch2.init(window)
   scratch3.init(window)
 
+  let styleElement = null
   function appendStyles() {
-    document.head.appendChild(scratch2.makeStyle())
-    document.head.appendChild(scratch3.makeStyle())
+    if (styleElement) {
+      styleElement.remove()
+    }
+    styleElement = scratch3.makeStyle()
+    document.head.appendChild(styleElement)
   }
+
+  // Categories added by packs registered after the page loaded need their
+  // colors in the page styles too.
+  onRegistryChange(() => {
+    if (styleElement && styleElement.isConnected) {
+      appendStyles()
+    }
+  })
 
   function newView(doc, options) {
     options = {
-      style: "scratch2",
+      style: "scratch3",
       ...options,
     }
 
     options.scale = options.scale || 1
 
-    if (options.style === "scratch2") {
-      return scratch2.newView(doc, options)
-    } else if (/^scratch3($|-)/.test(options.style)) {
+    if (/^scratch3($|-)/.test(options.style)) {
       return scratch3.newView(doc, options)
     }
 
@@ -56,7 +70,7 @@ export default function (window) {
     const view = newView(doc, options)
     const svg = view.render()
     // Used in high contrast theme
-    svg.classList.add(`scratchblocks-style-${options.style}`)
+    svg.classList.add(`mockblocks-style-${options.style}`)
     return svg
   }
 
@@ -86,16 +100,16 @@ export default function (window) {
     let container
     if (options.inline) {
       container = document.createElement("span")
-      let cls = "scratchblocks scratchblocks-inline"
+      let cls = "mockblocks mockblocks-inline"
       if (doc.scripts[0] && !doc.scripts[0].isEmpty) {
-        cls += ` scratchblocks-inline-${doc.scripts[0].blocks[0].shape}`
+        cls += ` mockblocks-inline-${doc.scripts[0].blocks[0].info.shape}`
       }
       container.className = cls
       container.style.display = "inline-block"
       container.style.verticalAlign = "middle"
     } else {
       container = document.createElement("div")
-      container.className = "scratchblocks"
+      container.className = "mockblocks"
     }
     container.appendChild(svg)
 
@@ -103,18 +117,16 @@ export default function (window) {
     el.appendChild(container)
   }
 
-  /* Render all matching elements in page to shiny scratch blocks.
+  /* Render all matching elements in page to shiny blocks.
    * Accepts a CSS selector as an argument.
    *
-   *  scratchblocks.renderMatching("pre.blocks");
-   *
-   * Like the old 'scratchblocks2.parse().
+   *  mockblocks.renderMatching("pre.blocks");
    */
   const renderMatching = function (selector, options) {
     selector = selector || "pre.blocks"
     options = {
       // Default values for the options
-      style: "scratch2",
+      style: "scratch3",
       inline: false,
       languages: ["en"],
       scale: 1,
@@ -143,6 +155,15 @@ export default function (window) {
   return {
     allLanguages: allLanguages, // read-only
     loadLanguages: loadLanguages,
+
+    registerPack: registerPack,
+    registeredPacks: registeredPacks, // read-only
+    // Packs that ship with mockblocks. `scratch` is registered at load; the
+    // others are registered with `registerPack(mockblocks.packs.<name>)`.
+    packs: {
+      scratch: scratchPack,
+      jscratch: jscratchPack,
+    },
 
     stringify: function (doc) {
       return doc.stringify()

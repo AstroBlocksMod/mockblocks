@@ -279,7 +279,7 @@
     "ruota in senso antiorario di %1 gradi": "MOTION_TURNLEFT",
     "ruota in senso orario di %1 gradi": "MOTION_TURNRIGHT",
     "quando si clicca sulla bandiera verde": "EVENT_WHENFLAGCLICKED",
-    "fine": "scratchblocks:end"
+    "fine": "mockblocks:end"
   },
   "name": "Italiano",
   "percentTranslated": 100

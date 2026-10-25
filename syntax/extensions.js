@@ -6,15 +6,10 @@
     4) Add icon to scratch3/style.js
 */
 
-// Moved extensions: key is scratch3, value is scratch2
-export const movedExtensions = {
-  pen: "pen",
-  video: "sensing",
-  music: "sound",
-}
-
 export const extensions = {
-  ...movedExtensions,
+  pen: "pen",
+  video: "video",
+  music: "music",
   faceSensing: "faceSensing",
   tts: "tts",
   translate: "translate",
@@ -26,8 +21,7 @@ export const extensions = {
   boost: "boost",
 }
 
-// Alias extensions: unlike movedExtensions, this is handled for both scratch2 and scratch3.
-// Key is alias, value is real extension name
+// Alias extensions: key is alias, value is real extension name
 export const aliasExtensions = {
   wedo2: "wedo",
   text2speech: "tts",

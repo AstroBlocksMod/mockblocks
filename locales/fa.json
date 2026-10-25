@@ -279,7 +279,7 @@
     "به اندازه %1 درجه به چپ بچرخ": "MOTION_TURNLEFT",
     "به اندازه %1 درجه به راست بچرخ": "MOTION_TURNRIGHT",
     "وقتی که پرچم کلیک شد": "EVENT_WHENFLAGCLICKED",
-    "آخر": "scratchblocks:end"
+    "آخر": "mockblocks:end"
   },
   "name": "فارسی",
   "percentTranslated": 100

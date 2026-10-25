@@ -1,5 +1,5 @@
 import SVG from "./draw.js"
-import cssContent from "./style.css.js"
+import makeCssContent from "./css.js"
 
 // Need to define here, as we cannot reference Style#makeNewIcons
 // during JS loading phase.
@@ -18,7 +18,7 @@ const highContrastIcons = new Set([
 
 export default class Style {
   static get cssContent() {
-    return cssContent
+    return makeCssContent()
   }
 
   static makeCommonIcons() {

@@ -1,8 +1,8 @@
 import init from "./index.js"
 
-const scratchblocks = (window.scratchblocks = init(window))
+const mockblocks = (window.mockblocks = init(window))
 
 // add our CSS to the page
-scratchblocks.appendStyles()
+mockblocks.appendStyles()
 
-export default scratchblocks
+export default mockblocks

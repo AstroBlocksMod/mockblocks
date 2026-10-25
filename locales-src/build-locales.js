@@ -167,7 +167,7 @@ const buildLocale = (code, rawLocale) => {
     if (/^sb2:/.test(command.id)) {
       continue
     }
-    if (/^scratchblocks:/.test(command.id)) {
+    if (/^mockblocks:/.test(command.id)) {
       continue
     }
     const result = translateKey(rawLocale, command.id)
