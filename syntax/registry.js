@@ -25,6 +25,23 @@ export function notifyChange() {
 // Category names end up in CSS class names, so keep them simple.
 const categoryNamePat = /^[a-zA-Z][\w-]*$/
 
+// Every category gets `.sb3-<name>`, `.sb3-<name>-alt` and `.sb3-<name>-dark`
+// rules, so a name must not land on a class the renderer uses for something
+// else, or on another category's shade classes.
+const reservedClassPat =
+  /^(label|extension-line|(input|literal|comment|diff)(-.*)?)$|-(alt|dark)$/
+
+export function checkCategoryName(name) {
+  if (!categoryNamePat.test(name)) {
+    throw new Error(`Invalid category name '${name}'`)
+  }
+  if (reservedClassPat.test(name)) {
+    throw new Error(
+      `Category name '${name}' is used by the renderer for something else`,
+    )
+  }
+}
+
 function shadesFrom(def, name) {
   if (def.primary) {
     const derived = deriveShades(def.primary)
@@ -44,9 +61,7 @@ function shadesFrom(def, name) {
 // other shades derived, or `{ primary, secondary, tertiary }`. `highContrast`
 // may give any of the three shades for the high contrast theme.
 export function normalizeCategory(name, def) {
-  if (!categoryNamePat.test(name)) {
-    throw new Error(`Invalid category name '${name}'`)
-  }
+  checkCategoryName(name)
   if (typeof def === "string") {
     def = { color: def }
   }

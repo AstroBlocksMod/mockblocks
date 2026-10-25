@@ -98,14 +98,34 @@ describe("registerPack", () => {
     expect(s.blocks[0].info.category).toBe("moon")
   })
 
-  test("blocks without an id get one from the pack name", () => {
+  test("blocks without an id get one from the pack name and shape", () => {
     const b = parseBlock("(fuel level)")
     expect(b.info).toMatchObject({
-      id: "rockets:fuel level",
+      id: "rockets:reporter:fuel level",
       category: "rocket",
       shape: "reporter",
     })
-    expect(blocksById["rockets:fuel level"].pack).toBe("rockets")
+    expect(blocksById["rockets:reporter:fuel level"].pack).toBe("rockets")
+  })
+
+  test("the same text can be a stack block and a reporter", () => {
+    registerPack({
+      name: "twins",
+      category: "motion",
+      blocks: [{ spec: "spin %1" }, { spec: "spin %1", shape: "reporter" }],
+    })
+    expect(parseBlock("spin (3)").info.id).toBe("twins:stack:spin _")
+    expect(parseBlock("(spin (3))").info.id).toBe("twins:reporter:spin _")
+  })
+
+  test("the same text and shape twice needs explicit ids", () => {
+    expect(() =>
+      registerPack({
+        name: "triplets",
+        category: "motion",
+        blocks: [{ spec: "hop %1" }, { spec: "hop %2" }],
+      }),
+    ).toThrow(/need their own ids/)
   })
 
   test("c blocks take a body", () => {
@@ -174,6 +194,32 @@ describe("registerPack", () => {
       }),
     ).toThrow(/Invalid category name/)
   })
+
+  test.each(["hat", "cap", "loop", "reset", "gray", "pen", "wedo2"])(
+    "rejects the override keyword '%s' as a category name",
+    name => {
+      expect(() =>
+        registerPack({ name: `kw-${name}`, categories: { [name]: "#123456" } }),
+      ).toThrow(/override keyword or extension/)
+      expect(categories[name]).toBeUndefined()
+    },
+  )
+
+  test.each([
+    "label",
+    "input-color",
+    "literal-number",
+    "comment",
+    "comment-line",
+    "diff",
+    "extension-line",
+    "motion-alt",
+    "rocket-dark",
+  ])("rejects '%s', which the renderer already uses", name => {
+    expect(() =>
+      registerPack({ name: `css-${name}`, categories: { [name]: "#123456" } }),
+    ).toThrow(/used by the renderer/)
+  })
 })
 
 describe("category colors", () => {
@@ -210,6 +256,15 @@ describe("category colors", () => {
       tertiary: "#3373cc",
     })
     expect(categories.motion.highContrast.primary).toBe("#80b5ff")
+  })
+
+  test("css is cached until a pack is registered", () => {
+    const before = makeCssContent()
+    expect(makeCssContent()).toBe(before)
+    registerPack({ name: "late", categories: { late: "#00aa55" } })
+    const after = makeCssContent()
+    expect(after).not.toBe(before)
+    expect(after).toContain("svg .sb3-late {")
   })
 
   test("css includes registered categories in both themes", () => {

@@ -102,6 +102,19 @@ export const unicodeIcons = {
 export const blocksById = Object.create(null)
 export const allBlocks = []
 
+// Words that mean something else after `::`. A category with one of these
+// names could never be picked with an override, or would hide the keyword.
+function isReservedOverrideWord(name) {
+  return (
+    overrideShapes.includes(name) ||
+    name === "loop" ||
+    name === "reset" ||
+    name in aliasCategories ||
+    Object.prototype.hasOwnProperty.call(extensions, name) ||
+    Object.prototype.hasOwnProperty.call(aliasExtensions, name)
+  )
+}
+
 export function isKnownCategory(name) {
   return (
     name in categories ||
@@ -116,13 +129,18 @@ function normalizeBlock(def, pack, packCategories) {
       `Missing spec in pack '${pack.name}': ${JSON.stringify(def)}`,
     )
   }
+  const shape = def.shape || "stack"
   let id = def.id
   if (!id) {
     // Scratch 2 blocks are identified by their selector. Anything else gets an
-    // id made from the pack name and the spec.
+    // id made from the pack name, the shape and the spec, so a stack block and
+    // a reporter with the same text can both be registered.
     id = def.selector
       ? `sb2:${def.selector}`
-      : `${pack.name}:${hashSpec(def.spec)}`
+      : `${pack.name}:${shape}:${hashSpec(def.spec)}`
+  }
+  if (!knownShapes.includes(shape)) {
+    throw new Error(`Unknown shape '${shape}' for block '${id}'`)
   }
   const category = def.category || pack.category
   if (!category) {
@@ -135,11 +153,8 @@ function normalizeBlock(def, pack, packCategories) {
   ) {
     throw new Error(`Unknown category '${category}' for block '${id}'`)
   }
-  const shape = def.shape || "stack"
-  if (!knownShapes.includes(shape)) {
-    throw new Error(`Unknown shape '${shape}' for block '${id}'`)
-  }
   return {
+    explicitId: !!(def.id || def.selector),
     id, // Used for Scratch 3 translations
     spec: def.spec, // Used for Scratch 2 translations
     parts: def.spec.split(splitPat).filter(x => x),
@@ -178,6 +193,11 @@ export function registerPack(pack) {
       if (name in categories) {
         throw new Error(`Category '${name}' is already registered`)
       }
+      if (isReservedOverrideWord(name)) {
+        throw new Error(
+          `Category name '${name}' is already an override keyword or extension`,
+        )
+      }
       return normalizeCategory(name, def)
     },
   )
@@ -185,9 +205,13 @@ export function registerPack(pack) {
 
   const seen = new Set()
   const blocks = (pack.blocks || []).map(def => {
-    const info = normalizeBlock(def, pack, packCategories)
+    const { explicitId, ...info } = normalizeBlock(def, pack, packCategories)
     if (blocksById[info.id] || seen.has(info.id)) {
-      throw new Error(`Duplicate ID: ${info.id}`)
+      throw new Error(
+        explicitId
+          ? `Duplicate ID: ${info.id}`
+          : `Duplicate ID: ${info.id} (two blocks with the same text and shape need their own ids)`,
+      )
     }
     seen.add(info.id)
     return info

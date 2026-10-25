@@ -1,4 +1,4 @@
-import { categories } from "../syntax/registry.js"
+import { categories, onChange } from "../syntax/registry.js"
 
 const common = `
 .sb3-label {
@@ -111,8 +111,16 @@ svg${theme.selector} .sb3-extension-line {
   return css
 }
 
-// Built on every call, so that categories registered after the page loaded
-// are included.
+// Built from the registry and cached until a pack is registered, so that
+// categories registered after the page loaded are included.
+let cached = null
+onChange(() => {
+  cached = null
+})
+
 export default function makeCssContent() {
-  return common + themes.map(themeRules).join("") + commonOverride
+  if (cached == null) {
+    cached = common + themes.map(themeRules).join("") + commonOverride
+  }
+  return cached
 }
