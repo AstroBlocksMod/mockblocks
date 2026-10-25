@@ -39,3 +39,4 @@ export { deriveShades, deriveHighContrastShades } from "./color.js"
 export { extensions, aliasExtensions } from "./extensions.js"
 
 export { default as scratchPack } from "./packs/scratch.js"
+export { default as jscratchPack } from "./packs/jscratch.js"

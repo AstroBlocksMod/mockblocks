@@ -1,7 +1,5 @@
 # `mockblocks`
 
-NOTE: NOT BUILT YET. Remove this message when done with MVP and after you updated the document and fixed and added things as needed.
-
 ## Overview
 
 A fork of scratchblocks that makes it easier to create mockups of block-based code, including blocks, categories and shapes that do not exist in Scratch. It is not merged back upstream.
@@ -13,7 +11,7 @@ The public global and package name is `mockblocks`. The text syntax is the scrat
 - `index.js` builds the public API (`parse`, `render`, `renderMatching`, `newView`, `loadLanguages`, `stringify`). `browser.js` and `browser.es.js` are the bundle entry points.
 - `syntax/` is the parser and model. `syntax.js` is the parser, `model.js` holds `Block`, `Input`, `Script` and friends.
 - `syntax/registry.js` holds the registered categories (with colors for both themes) and packs. `syntax/blocks.js` holds the block lookup tables and `registerPack()`, which is how every block gets in, including the built-in ones.
-- `syntax/packs/` holds packs that ship with mockblocks. `scratch.js` is the Scratch palette (its block list lives in `syntax/commands.js`, which the locale builder also reads). Add new block sets as packs, not as edits to the Scratch pack.
+- `syntax/packs/` holds packs that ship with mockblocks. `scratch.js` is the Scratch palette (its block list lives in `syntax/commands.js`, which the locale builder also reads) and is the only pack registered at load. `jscratch.js` mocks up the "Advanced language features" section of the [jScratch roadmap](https://github.com/AstroBlocksMod/jScratch/blob/main/docs/roadmap.md); jScratch has not designed those blocks, so do not add blocks to it that the roadmap does not describe, and check the roadmap again before changing it. Add new block sets as packs, not as edits to the Scratch pack, and expose them on `packs` in `index.js`.
 - `syntax/color.js` derives secondary and tertiary shades from one color, so a pack category only needs `{ color: "#hex" }`.
 - `syntax/shapes.js` describes shapes as features (`top`, `bottom`, `mouth`, `output`, `ring`). `info.shape` on a block is still a name (`"stack"`, `"hat"`, `"c-block"`, `"hat c"`, or a pack's own name), and `Block` resolves it to a feature object on `block.shape`. Code must read `block.isHat`, `block.hasScript`, `block.shape.top` and so on rather than compare shape name strings. The renderer composes the outline from the features, so any combination (a hat with a mouth, a cap with a define top) draws without new code.
 - `scratch3/` is the renderer. It draws the Scratch 3 look in two styles, `scratch3` and `scratch3-high-contrast`. `draw.js` builds SVG paths, `blocks.js` lays blocks out, `css.js` generates the stylesheet from the registry at runtime (so it must not be a static `.css.js` string). There is no Scratch 2 renderer; it was removed from the fork.
@@ -31,7 +29,7 @@ A pack is a plain object: `{ name, categories, shapes, blocks, aliases }`. A blo
 ## Commands
 
 - `npm test` runs the Jest tests.
-- `npm run snapshots` renders every snapshot script to PNG. Rendering differs slightly between machines, so compare against a render you made yourself on the same machine, not against the committed PNGs.
+- `npm run snapshots` renders every snapshot script to PNG. Rendering differs slightly between machines, so compare against a render you made yourself on the same machine, not against the committed PNGs, and only commit PNGs for snapshots you added. The snapshot page registers the bundled packs for every snapshot, so the Scratch snapshots also catch a pack that takes over a Scratch block.
 - `npm run build` writes `build/`. `npm start` serves the dev page at <http://localhost:8000/>.
 - `npm run lint` and `npm run fmt`.
 

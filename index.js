@@ -15,6 +15,7 @@ import {
   registeredPacks,
   onRegistryChange,
   scratchPack,
+  jscratchPack,
   Label,
   Icon,
   Input,
@@ -157,9 +158,11 @@ export default function (window) {
 
     registerPack: registerPack,
     registeredPacks: registeredPacks, // read-only
-    // Packs that ship with mockblocks. `scratch` is registered at load.
+    // Packs that ship with mockblocks. `scratch` is registered at load; the
+    // others are registered with `registerPack(mockblocks.packs.<name>)`.
     packs: {
       scratch: scratchPack,
+      jscratch: jscratchPack,
     },
 
     stringify: function (doc) {

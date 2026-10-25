@@ -863,3 +863,59 @@ wenn ein Gesicht erkannt wird
 `,
   "de",
 )
+
+/*****************************************************************************/
+
+// mockblocks: shapes from overrides
+
+test(
+  "en-mockup-overrides",
+  `
+blueprint [Player] :: hat c #4c6ef5
+  behavior [jump] :: define c
+    change y by (10)
+  end
+end
+
+try :: c #2a9d8f
+  say [a]
+else
+  say [b]
+end
+
+when done :: cat c
+  stop [all v]
+end
+
+finish :: cap #e76f51
+`,
+)
+
+// mockblocks: jScratch pack
+
+test(
+  "en-jscratch",
+  `
+class [Player]
+  field [health] = (100)
+  method [jump]
+    change y by (10)
+  end
+  method [hurt (amount)]
+    set field [health] of (this) to ((field [health] of (this)) - (amount))
+  end
+end
+
+when flag clicked
+set [player v] to (new [Player])
+add (new [Enemy]) to [enemies v]
+call [jump] on (player)
+
+define double (x)
+local [result] = ((x) * (2))
+return (result)
+
+define macro [bounce]
+if on edge, bounce
+`,
+)

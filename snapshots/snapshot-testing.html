@@ -29,6 +29,9 @@
         .then(res => res.json())
         .then(de => mockblocks.loadLanguages({ de }))
         .then(() => {
+          // Bundled packs are registered for every snapshot, so the existing
+          // snapshots also check that a pack does not change Scratch blocks.
+          mockblocks.registerPack(mockblocks.packs.jscratch)
           window.mockblocksLoaded = true
         })
     </script>

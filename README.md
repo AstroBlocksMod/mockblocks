@@ -148,6 +148,16 @@ say (new [Player])
 
 A block's `shape` is a shape name (`stack`, `hat`, `cap`, `c-block`, `reporter`, `boolean`, `ring`, or one from `shapes`), shape words such as `"hat c"`, or a feature object: `{ top: "notch" | "hat" | "cat" | "define", bottom: "puzzle" | "flat", mouth: true | false, output: null | "round" | "hex" }`.
 
+### Bundled packs
+
+`mockblocks.packs.jscratch` has draft blocks for the advanced language features on the [jScratch roadmap](https://github.com/AstroBlocksMod/jScratch/blob/main/docs/roadmap.md): functions (`return`, `local`), macros (`define macro`) and objects (`class`, `field`, `method`, `new`, `this`, `field of`, `set field of`, `call on`). jScratch has not designed these blocks yet, so treat the wording as a placeholder. It is not registered by default:
+
+```js
+mockblocks.registerPack(mockblocks.packs.jscratch)
+```
+
+### Writing a pack
+
 `spec` uses `%1`, `%2` and so on for inputs, with the input kinds in `inputs` (`%s` string, `%n` number, `%b` boolean, `%m.name` dropdown). Registration is all or nothing: an invalid category, shape or block throws and nothing is registered. The built-in Scratch blocks are the `scratch` pack, available as `mockblocks.packs.scratch`.
 
 ## ESM
