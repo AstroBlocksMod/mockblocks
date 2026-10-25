@@ -1,31 +1,36 @@
 import { extensions, aliasExtensions } from "./extensions.js"
-
-// List of classes we're allowed to override.
-
-const overrideCategories = [
-  "motion",
-  "looks",
-  "sound",
-  "variables",
-  "list",
-  "events",
-  "control",
-  "sensing",
-  "operators",
-  "custom",
-  "custom-arg",
-  "extension",
-  "grey",
-  "obsolete",
-  ...Object.keys(extensions),
-  ...Object.keys(aliasExtensions),
-]
+import {
+  categories,
+  registeredPacks,
+  addCategory,
+  normalizeCategory,
+  notifyChange,
+} from "./registry.js"
+import scratchPack from "./packs/scratch.js"
 
 export const aliasCategories = Object.assign(Object.create(null), {
   gray: "grey",
   other: "grey",
 })
 
+// Shapes a block definition may use.
+export const knownShapes = [
+  "stack",
+  "cap",
+  "hat",
+  "cat",
+  "define-hat",
+  "define-cat",
+  "c-block",
+  "c-block cap",
+  "celse",
+  "cend",
+  "reporter",
+  "boolean",
+  "ring",
+]
+
+// Shapes that may be set with `:: shape` overrides.
 const overrideShapes = [
   "hat",
   "cap",
@@ -38,9 +43,6 @@ const overrideShapes = [
 
 // languages that should be displayed right to left
 export const rtlLanguages = ["ar", "ckb", "fa", "he"]
-
-// List of commands taken from Scratch
-import scratchCommands from "./commands.js"
 
 const inputNumberPat = /%([0-9]+)/
 export const inputPat = /(%[a-zA-Z0-9](?:\.[a-zA-Z0-9]+)?)/
@@ -86,35 +88,6 @@ export function minifyHash(hash) {
     .toLowerCase()
 }
 
-export const blocksById = {}
-const allBlocks = scratchCommands.map(def => {
-  if (!def.id) {
-    if (!def.selector) {
-      throw new Error(`Missing ID: ${def.spec}`)
-    }
-    def.id = `sb2:${def.selector}`
-  }
-  if (!def.spec) {
-    throw new Error(`Missing spec: ${def.id}`)
-  }
-
-  const info = {
-    id: def.id, // Used for Scratch 3 translations
-    spec: def.spec, // Used for Scratch 2 translations
-    parts: def.spec.split(splitPat).filter(x => x),
-    selector: def.selector || `sb3:${def.id}`, // Used for JSON marshalling
-    inputs: def.inputs == null ? [] : def.inputs,
-    shape: def.shape,
-    category: def.category,
-    hasLoopArrow: !!def.hasLoopArrow,
-  }
-  if (blocksById[info.id]) {
-    throw new Error(`Duplicate ID: ${info.id}`)
-  }
-  blocksById[info.id] = info
-  return info
-})
-
 export const unicodeIcons = {
   "@greenFlag": "⚑",
   "@turnRight": "↻",
@@ -123,49 +96,190 @@ export const unicodeIcons = {
   "@delInput": "◂",
 }
 
-export const allLanguages = {}
-function loadLanguage(code, language) {
-  const blocksByHash = (language.blocksByHash = {})
+/*****************************************************************************/
 
-  Object.keys(language.commands).forEach(blockId => {
-    const nativeSpec = language.commands[blockId]
-    const block = blocksById[blockId]
+// Every known block, by id, and in registration order.
+export const blocksById = Object.create(null)
+export const allBlocks = []
 
-    const nativeHash = hashSpec(nativeSpec)
-    if (!blocksByHash[nativeHash]) {
-      blocksByHash[nativeHash] = []
-    }
-    blocksByHash[nativeHash].push(block)
+export function isKnownCategory(name) {
+  return (
+    name in categories ||
+    Object.prototype.hasOwnProperty.call(extensions, name) ||
+    Object.prototype.hasOwnProperty.call(aliasExtensions, name)
+  )
+}
 
-    // fallback image replacement, for languages without aliases
-    const m = iconPat.exec(block.spec)
-    if (m) {
-      const image = m[0]
-      const hash = nativeHash.replace(hashSpec(image), unicodeIcons[image])
-      if (!blocksByHash[hash]) {
-        blocksByHash[hash] = []
+function normalizeBlock(def, pack, packCategories) {
+  if (!def.spec) {
+    throw new Error(
+      `Missing spec in pack '${pack.name}': ${JSON.stringify(def)}`,
+    )
+  }
+  let id = def.id
+  if (!id) {
+    // Scratch 2 blocks are identified by their selector. Anything else gets an
+    // id made from the pack name and the spec.
+    id = def.selector
+      ? `sb2:${def.selector}`
+      : `${pack.name}:${hashSpec(def.spec)}`
+  }
+  const category = def.category || pack.category
+  if (!category) {
+    throw new Error(`Missing category for block '${id}'`)
+  }
+  if (
+    !isKnownCategory(category) &&
+    !aliasCategories[category] &&
+    !packCategories.has(category)
+  ) {
+    throw new Error(`Unknown category '${category}' for block '${id}'`)
+  }
+  const shape = def.shape || "stack"
+  if (!knownShapes.includes(shape)) {
+    throw new Error(`Unknown shape '${shape}' for block '${id}'`)
+  }
+  return {
+    id, // Used for Scratch 3 translations
+    spec: def.spec, // Used for Scratch 2 translations
+    parts: def.spec.split(splitPat).filter(x => x),
+    selector: def.selector || `sb3:${id}`, // Used for JSON marshalling
+    inputs: def.inputs == null ? [] : def.inputs,
+    shape,
+    category,
+    hasLoopArrow: !!def.hasLoopArrow,
+    pack: pack.name,
+  }
+}
+
+/* Register a pack of blocks.
+ *
+ *   mockblocks.registerPack({
+ *     name: "rockets",
+ *     categories: { rocket: { color: "#4c6ef5" } },
+ *     blocks: [
+ *       { id: "rockets.launch", spec: "launch %1", inputs: ["%s"], shape: "stack", category: "rocket" },
+ *     ],
+ *     aliases: { "lift off %1": "rockets.launch" },
+ *   })
+ *
+ * Nothing is registered if any part of the pack is invalid.
+ */
+export function registerPack(pack) {
+  if (!pack || typeof pack.name !== "string" || !pack.name) {
+    throw new Error("A pack needs a name")
+  }
+  if (pack.name in registeredPacks) {
+    throw new Error(`Pack '${pack.name}' is already registered`)
+  }
+
+  const newCategories = Object.entries(pack.categories || {}).map(
+    ([name, def]) => {
+      if (name in categories) {
+        throw new Error(`Category '${name}' is already registered`)
       }
-      blocksByHash[hash].push(block)
+      return normalizeCategory(name, def)
+    },
+  )
+  const packCategories = new Set(newCategories.map(c => c.name))
+
+  const seen = new Set()
+  const blocks = (pack.blocks || []).map(def => {
+    const info = normalizeBlock(def, pack, packCategories)
+    if (blocksById[info.id] || seen.has(info.id)) {
+      throw new Error(`Duplicate ID: ${info.id}`)
     }
+    seen.add(info.id)
+    return info
   })
 
-  language.nativeAliases = {}
-  Object.keys(language.aliases).forEach(alias => {
-    const blockId = language.aliases[alias]
-    const block = blocksById[blockId]
-    if (block === undefined) {
-      throw new Error(`Invalid alias '${blockId}'`)
+  const aliases = Object.entries(pack.aliases || {})
+  for (const [alias, id] of aliases) {
+    if (!blocksById[id] && !seen.has(id)) {
+      throw new Error(`Invalid alias '${id}'`)
     }
-    const aliasHash = hashSpec(alias)
-    if (!blocksByHash[aliasHash]) {
-      blocksByHash[aliasHash] = []
+    if (alias in english.aliases) {
+      throw new Error(`Duplicate alias '${alias}'`)
     }
-    blocksByHash[aliasHash].push(block)
+  }
 
-    if (!language.nativeAliases[blockId]) {
-      language.nativeAliases[blockId] = []
+  // Everything checked out, so apply.
+  newCategories.forEach(addCategory)
+  for (const info of blocks) {
+    blocksById[info.id] = info
+    allBlocks.push(info)
+    english.commands[info.id] = info.spec
+    if (english.blocksByHash) {
+      addBlockToLanguage(english, info, info.spec)
     }
-    language.nativeAliases[blockId].push(alias)
+  }
+  for (const [alias, id] of aliases) {
+    english.aliases[alias] = id
+    if (english.blocksByHash) {
+      addAliasToLanguage(english, alias, id)
+    }
+  }
+  registeredPacks[pack.name] = pack
+  notifyChange()
+  return pack
+}
+
+/*****************************************************************************/
+
+export const allLanguages = {}
+
+function addBlockToLanguage(language, block, nativeSpec) {
+  const blocksByHash = language.blocksByHash
+
+  const nativeHash = hashSpec(nativeSpec)
+  if (!blocksByHash[nativeHash]) {
+    blocksByHash[nativeHash] = []
+  }
+  blocksByHash[nativeHash].push(block)
+
+  // fallback image replacement, for languages without aliases
+  const m = iconPat.exec(block.spec)
+  if (m) {
+    const image = m[0]
+    const hash = nativeHash.replace(hashSpec(image), unicodeIcons[image])
+    if (!blocksByHash[hash]) {
+      blocksByHash[hash] = []
+    }
+    blocksByHash[hash].push(block)
+  }
+}
+
+function addAliasToLanguage(language, alias, blockId) {
+  const block = blocksById[blockId]
+  if (block === undefined) {
+    throw new Error(`Invalid alias '${blockId}'`)
+  }
+  const aliasHash = hashSpec(alias)
+  if (!language.blocksByHash[aliasHash]) {
+    language.blocksByHash[aliasHash] = []
+  }
+  language.blocksByHash[aliasHash].push(block)
+
+  if (!language.nativeAliases[blockId]) {
+    language.nativeAliases[blockId] = []
+  }
+  language.nativeAliases[blockId].push(alias)
+}
+
+function loadLanguage(code, language) {
+  language.blocksByHash = {}
+  language.nativeAliases = {}
+
+  Object.keys(language.commands).forEach(blockId => {
+    const block = blocksById[blockId]
+    if (!block) {
+      throw new Error(`Unknown ID: ${blockId}`)
+    }
+    addBlockToLanguage(language, block, language.commands[blockId])
+  })
+
+  Object.keys(language.aliases).forEach(alias => {
+    addAliasToLanguage(language, alias, language.aliases[alias])
   })
 
   // Some English blocks were renamed between Scratch 2 and Scratch 3. Wire them
@@ -267,9 +381,10 @@ export const english = {
 
   commands: {},
 }
-allBlocks.forEach(info => {
-  english.commands[info.id] = info.spec
-})
+
+// The built-in Scratch blocks are the first pack. Packs registered later are
+// wired into the English language as they arrive.
+registerPack(scratchPack)
 loadLanguages({
   en: english,
 })
@@ -474,11 +589,11 @@ export function applyOverrides(info, overrides) {
       info.categoryIsDefault = false
     } else if (
       aliasCategories[name] &&
-      overrideCategories.includes(aliasCategories[name])
+      isKnownCategory(aliasCategories[name])
     ) {
       info.category = aliasCategories[name]
       info.categoryIsDefault = false
-    } else if (overrideCategories.includes(name)) {
+    } else if (isKnownCategory(name)) {
       info.category = name
       info.categoryIsDefault = false
     } else if (name === "cat" && info.shape === "define-hat") {

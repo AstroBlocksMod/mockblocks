@@ -11,6 +11,10 @@ import {
   parse,
   allLanguages,
   loadLanguages,
+  registerPack,
+  registeredPacks,
+  onRegistryChange,
+  scratchPack,
   Label,
   Icon,
   Input,
@@ -26,9 +30,22 @@ export default function (window) {
 
   scratch3.init(window)
 
+  let styleElement = null
   function appendStyles() {
-    document.head.appendChild(scratch3.makeStyle())
+    if (styleElement) {
+      styleElement.remove()
+    }
+    styleElement = scratch3.makeStyle()
+    document.head.appendChild(styleElement)
   }
+
+  // Categories added by packs registered after the page loaded need their
+  // colors in the page styles too.
+  onRegistryChange(() => {
+    if (styleElement && styleElement.isConnected) {
+      appendStyles()
+    }
+  })
 
   function newView(doc, options) {
     options = {
@@ -137,6 +154,13 @@ export default function (window) {
   return {
     allLanguages: allLanguages, // read-only
     loadLanguages: loadLanguages,
+
+    registerPack: registerPack,
+    registeredPacks: registeredPacks, // read-only
+    // Packs that ship with mockblocks. `scratch` is registered at load.
+    packs: {
+      scratch: scratchPack,
+    },
 
     stringify: function (doc) {
       return doc.stringify()
