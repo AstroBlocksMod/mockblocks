@@ -15,20 +15,27 @@
   "type": "module",
   "main": "build/mockblocks.min.js",
   "module": "build/mockblocks.min.es.js",
+  "bin": {
+    "mockblocks": "bin/mockblocks.js"
+  },
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "build": "rollup -c --environment buildTarget:PROD",
-    "fmt": "prettier --cache --write *.js syntax/*.js syntax/packs/*.js scratch3/*.js locales-src/*.js snapshots/*.js snapshots/*.html tests/*.js",
+    "fmt": "prettier --cache --write *.js bin/*.js syntax/*.js syntax/packs/*.js scratch3/*.js locales-src/*.js snapshots/*.js snapshots/*.html tests/*.js",
+    "lint": "eslint *.js bin/*.js syntax/*.js syntax/packs/*.js scratch3/*.js locales-src/*.js snapshots/*.js tests/*.js",
     "lint:staged": "lint-staged",
-    "lint": "eslint *.js syntax/*.js syntax/packs/*.js scratch3/*.js locales-src/*.js snapshots/*.js tests/*.js",
     "locales": "node locales-src/build-locales.js",
+    "manual": "node ./snapshots/manual.js",
     "rollup": "rollup -c",
     "snapshots": "node ./snapshots/index.js",
-    "manual": "node ./snapshots/manual.js",
     "start": "rollup -c -m -w",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "dependencies": {
+    "canvas": "^3.2.3",
+    "jsdom": "^30.1.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",
@@ -54,10 +61,13 @@
     "scratch-l10n": "^6.1.86"
   },
   "keywords": [
-    "scratch",
     "blocks",
-    "mockup"
+    "mockup",
+    "scratch"
   ],
+  "jest": {
+    "transform": {}
+  },
   "lint-staged": {
     "package.json": [
       "prettier-package-json --write",
@@ -73,8 +83,5 @@
     "semi": false,
     "trailingComma": "all",
     "arrowParens": "avoid"
-  },
-  "jest": {
-    "transform": {}
   }
 }

@@ -82,6 +82,36 @@ import mockblocks from "mockblocks";
 mockblocks.renderMatching('pre.blocks');
 ```
 
+## Command line
+
+The `mockblocks` command turns text files into SVG images, with no browser needed:
+
+```sh
+npx mockblocks jump.txt                    # writes jump.svg next to it
+npx mockblocks -d images scripts/*.txt     # writes every image into images/
+echo "move (10) steps" | npx mockblocks > move.svg
+```
+
+| option | effect |
+|---|---|
+| `-o`, `--output <file>` | where to write the image (`-` for standard output), for a single input |
+| `-d`, `--out-dir <dir>` | write every image into this directory |
+| `-s`, `--style <style>` | `scratch3` (default) or `scratch3-high-contrast` |
+| `-l`, `--lang <code>` | also recognize blocks in this language, such as `de`; can be repeated |
+| `-p`, `--pack <pack>` | register a bundled pack (`jscratch`) or a `.js`/`.json` file whose default export is a pack; can be repeated |
+| `--scale <n>` | scale the image (default 1) |
+
+If a file fails, the error is printed, the other files are still rendered, and the command exits with status 1.
+
+The same rendering is available from Node:
+
+```js
+import { toSVG } from "mockblocks/node.js";
+const svg = toSVG("when flag clicked\nmove (10) steps", { style: "scratch3", languages: ["en"] });
+```
+
+Text is measured with the fonts installed on your machine (Helvetica Neue, falling back to Helvetica), the same way a browser would, so block widths match what the browser renders.
+
 # Mockups
 
 The point of mockblocks is drawing blocks that do not exist yet. There are two ways to do that: overrides on a single line, and packs that define a whole block set.
