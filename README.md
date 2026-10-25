@@ -82,6 +82,74 @@ import mockblocks from "mockblocks";
 mockblocks.renderMatching('pre.blocks');
 ```
 
+# Mockups
+
+The point of mockblocks is drawing blocks that do not exist yet. There are two ways to do that: overrides on a single line, and packs that define a whole block set.
+
+## Overrides
+
+Anything after `::` on a line changes how that block looks. mockblocks keeps the scratchblocks overrides (a category name, a hex color, `loop`, `+` and `-`) and adds shape words that can be combined:
+
+| word | effect |
+|---|---|
+| `hat`, `cat`, `define` | the top edge |
+| `c` | the block has a body, closed with `end` (`else` works too) |
+| `cap` | nothing can go below the block |
+| `stack` | back to a plain block |
+| `reporter`, `boolean`, `ring` | round or pointed blocks |
+
+So a class block with methods inside it is just:
+
+```
+class [Player] :: hat c #4c6ef5
+  method [jump] :: define c
+    change y by (10)
+  end
+end
+```
+
+A hex color gives the block the same three shades a built-in category has (slightly darker for dropdowns, darker again for the outline and empty boolean slots), in both the original and the high contrast theme.
+
+## Packs
+
+For a block set you use more than once, register a pack. A pack lists categories (with colors), optional shapes, and blocks. Once registered, the blocks are recognized by their text with no overrides needed:
+
+```js
+mockblocks.registerPack({
+  name: "oop",
+  categories: {
+    classes: "#4c6ef5",
+    // or explicit shades for both themes:
+    // classes: { primary, secondary, tertiary, highContrast: { primary, secondary, tertiary } }
+  },
+  shapes: {
+    "class-hat": { top: "hat", mouth: true },
+  },
+  blocks: [
+    { id: "oop.class", spec: "class %1", inputs: ["%s"], shape: "class-hat", category: "classes" },
+    { id: "oop.method", spec: "method %1", inputs: ["%s"], shape: "define c", category: "classes" },
+    { id: "oop.new", spec: "new %1", inputs: ["%s"], shape: "reporter", category: "classes" },
+  ],
+  aliases: {
+    "create %1": "oop.new",
+  },
+})
+```
+
+```
+class [Player]
+  method [jump]
+    change y by (10)
+  end
+end
+
+say (new [Player])
+```
+
+A block's `shape` is a shape name (`stack`, `hat`, `cap`, `c-block`, `reporter`, `boolean`, `ring`, or one from `shapes`), shape words such as `"hat c"`, or a feature object: `{ top: "notch" | "hat" | "cat" | "define", bottom: "puzzle" | "flat", mouth: true | false, output: null | "round" | "hex" }`.
+
+`spec` uses `%1`, `%2` and so on for inputs, with the input kinds in `inputs` (`%s` string, `%n` number, `%b` boolean, `%m.name` dropdown). Registration is all or nothing: an invalid category, shape or block throws and nothing is registered. The built-in Scratch blocks are the `scratch` pack, available as `mockblocks.packs.scratch`.
+
 ## ESM
 
 The ESM build (`build/mockblocks.min.es.js`) default-exports the `mockblocks` object instead of defining `window.mockblocks`. The ESM translation files default-export a function that loads the translations:

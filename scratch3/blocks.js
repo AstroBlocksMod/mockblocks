@@ -9,6 +9,8 @@ import {
   Document,
   extensions,
   aliasExtensions,
+  deriveShades,
+  deriveHighContrastShades,
 } from "../syntax/index.js"
 
 import SVG from "./draw.js"
@@ -75,6 +77,15 @@ export class LabelView {
 
 LabelView.metricsCache = {}
 LabelView.toMeasure = []
+
+// A block with a `:: #hex` override gets the same three shades a category
+// would, so its dropdowns and boolean slots match the built-in look.
+function customShades(color, iconStyle) {
+  const shades = deriveShades(color)
+  return iconStyle === "high-contrast"
+    ? deriveHighContrastShades(shades)
+    : shades
+}
 
 export class IconView {
   constructor(icon) {
@@ -220,36 +231,34 @@ export class InputView {
       } sb3-input sb3-input-${this.shape}`,
     })
 
+    const shades = parent.info.color
+      ? customShades(parent.info.color, iconStyle)
+      : null
     if (this.isColor) {
       SVG.setProps(el, {
         fill: this.value,
       })
     } else if (this.shape === "dropdown") {
-      // custom colors
-      if (parent.info.color) {
+      if (shades) {
         SVG.setProps(el, {
-          fill: parent.info.color,
-          stroke: "rgba(0, 0, 0, 0.2)",
+          fill: shades.primary,
+          stroke: shades.tertiary,
         })
       }
     } else if (this.shape === "number-dropdown") {
       el.classList.add(`sb3-${parent.info.category}-alt`)
-
-      // custom colors
-      if (parent.info.color) {
+      if (shades) {
         SVG.setProps(el, {
-          fill: "rgba(0, 0, 0, 0.1)",
-          stroke: "rgba(0, 0, 0, 0.15)", // combines with fill...
+          fill: shades.secondary,
+          stroke: shades.tertiary,
         })
       }
     } else if (this.shape === "boolean") {
       el.classList.remove(`sb3-${parent.info.category}`)
       el.classList.add(`sb3-${parent.info.category}-dark`)
-
-      // custom colors
-      if (parent.info.color) {
+      if (shades) {
         SVG.setProps(el, {
-          fill: "rgba(0, 0, 0, 0.15)",
+          fill: shades.tertiary,
         })
       }
     }
@@ -602,9 +611,10 @@ class BlockView {
     const el = this.drawSelf(iconStyle, innerWidth, this.height, lines)
     objects.splice(0, 0, el)
     if (this.info.color) {
+      const shades = customShades(this.info.color, iconStyle)
       SVG.setProps(el, {
-        fill: this.info.color,
-        stroke: "rgba(0, 0, 0, 0.2)",
+        fill: shades.primary,
+        stroke: shades.tertiary,
       })
     }
 

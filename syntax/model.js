@@ -257,6 +257,8 @@ export class Block {
       }
       if (this.info.isReset && this.info.category === "obsolete") {
         overrides += "reset"
+      } else if (this.info.color) {
+        overrides += this.info.color
       } else {
         overrides += this.info.category
       }
@@ -268,7 +270,12 @@ export class Block {
       overrides += this.info.shape === "define-cat" ? "cat" : this.info.shape
     }
     if (overrides) {
-      text += ` :: ${overrides}`
+      // Overrides go on the opening line, before any body.
+      const nl = text.indexOf("\n")
+      text =
+        this.hasScript && nl >= 0
+          ? `${text.slice(0, nl)} :: ${overrides}${text.slice(nl)}`
+          : `${text} :: ${overrides}`
     }
     if (
       (text.startsWith("+") || text.startsWith("-")) &&

@@ -24,6 +24,10 @@ The public global and package name is `mockblocks`. The text syntax is the scrat
 
 A pack is a plain object: `{ name, categories, shapes, blocks, aliases }`. A block's `shape` can be a registered name, shape words such as `"hat c"`, or a feature object such as `{ top: "hat", mouth: true }`. Register it with `mockblocks.registerPack(pack)` (or `registerPack` from `syntax/index.js`). Registration is all or nothing: an invalid block, category or alias throws and leaves the registry untouched. Category names become CSS classes (`.sb3-<name>`), so they must be simple identifiers. The page stylesheet is regenerated when a pack is registered after `appendStyles()` ran.
 
+## Overrides
+
+`applyOverrides()` in `syntax/blocks.js` handles the words after `::`. Shape words (`hat`, `cat`, `define`, `c`, `cap`, `stack`, `reporter`, `boolean`, `ring`) are applied in order on top of the block's own shape through `applyShapeWord()`, and a registered shape name can be used as a word too. The resulting shape is stored under its canonical name, which is what `stringify()` prints. A hex color is stored on `info.color`; the renderer derives the three shades from it with `syntax/color.js`.
+
 ## Commands
 
 - `npm test` runs the Jest tests.

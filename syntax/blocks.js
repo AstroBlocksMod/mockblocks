@@ -7,10 +7,12 @@ import {
   notifyChange,
 } from "./registry.js"
 import {
+  shapes,
   addShape,
   normalizeShape,
   resolveShape,
   shapeName,
+  applyShapeWord,
   isShapeWord,
   packShapeNames,
   checkPackShapeName,
@@ -21,17 +23,6 @@ export const aliasCategories = Object.assign(Object.create(null), {
   gray: "grey",
   other: "grey",
 })
-
-// Shapes that may be set with `:: shape` overrides.
-const overrideShapes = [
-  "hat",
-  "cap",
-  "stack",
-  "boolean",
-  "reporter",
-  "ring",
-  "cat",
-]
 
 // languages that should be displayed right to left
 export const rtlLanguages = ["ar", "ckb", "fa", "he"]
@@ -632,6 +623,11 @@ export function lookupDropdown(name, languages) {
 }
 
 export function applyOverrides(info, overrides) {
+  // Shape words build on the block's own shape and on each other, so
+  // `:: hat c` is a hat with a body. A registered shape name replaces the
+  // shape outright.
+  let shape = null
+  let shapeLabel = null
   for (const name of overrides) {
     if (hexColorPat.test(name)) {
       info.color = name
@@ -646,12 +642,12 @@ export function applyOverrides(info, overrides) {
     } else if (isKnownCategory(name)) {
       info.category = name
       info.categoryIsDefault = false
-    } else if (name === "cat" && resolveShape(info.shape).top === "define") {
-      info.shape = "define-cat"
-      info.shapeIsDefault = false
-    } else if (overrideShapes.includes(name)) {
-      info.shape = name
-      info.shapeIsDefault = false
+    } else if (isShapeWord(name)) {
+      shape = applyShapeWord(shape || resolveShape(info.shape), name)
+      shapeLabel = null
+    } else if (name in shapes) {
+      shape = shapes[name]
+      shapeLabel = name
     } else if (name === "loop") {
       info.hasLoopArrow = true
     } else if (name === "+" || name === "-") {
@@ -660,6 +656,10 @@ export function applyOverrides(info, overrides) {
       info.categoryIsDefault = false
       info.isReset = true
     }
+  }
+  if (shape) {
+    info.shape = shapeLabel || shapeName(shape)
+    info.shapeIsDefault = false
   }
 }
 

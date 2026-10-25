@@ -31,7 +31,10 @@ export {
   normalizeShape,
   shapeFromWords,
   canonicalName,
+  isShapeWord,
 } from "./shapes.js"
+
+export { deriveShades, deriveHighContrastShades } from "./color.js"
 
 export { extensions, aliasExtensions } from "./extensions.js"
 
