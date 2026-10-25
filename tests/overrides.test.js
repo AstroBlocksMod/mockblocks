@@ -109,3 +109,36 @@ describe("color overrides", () => {
     expect(parseBlock(code).stringify()).toBe(code)
   })
 })
+
+describe("review fixes", () => {
+  test("define cat on a plain line round-trips", () => {
+    const b = parseBlock("foo :: define cat")
+    expect(b.shape.top).toBe("define-cat")
+    expect(b.stringify()).toBe("foo :: define-cat")
+    expect(parseBlock(b.stringify()).shape.top).toBe("define-cat")
+  })
+
+  test("a define block keeps writing just cat", () => {
+    expect(parseBlock("define test :: cat").stringify()).toBe(
+      "define test :: cat",
+    )
+    const code = "define test :: cat c\n  say [hi]\nend"
+    const b = parseBlock(code)
+    expect(b.shape).toMatchObject({ top: "define-cat", mouth: true })
+    expect(b.stringify()).toBe(code)
+  })
+
+  test.each(["celse", "cend", "outline", "define-hat", "c-block"])(
+    "the internal shape name '%s' is not an override",
+    name => {
+      const b = parseBlock(`foo :: ${name}`)
+      expect(b.info.shape).toBe("stack")
+      expect(b.isElse || b.isEnd || b.isOutline).toBe(false)
+    },
+  )
+
+  test(":: cend does not close a C block", () => {
+    const b = parseBlock("forever\nsay [a]\nfoo :: cend\nsay [b]\nend")
+    expect(b.children.at(-1).blocks.length).toBe(3)
+  })
+})

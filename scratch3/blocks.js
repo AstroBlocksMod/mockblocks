@@ -79,12 +79,20 @@ LabelView.metricsCache = {}
 LabelView.toMeasure = []
 
 // A block with a `:: #hex` override gets the same three shades a category
-// would, so its dropdowns and boolean slots match the built-in look.
+// would, so its dropdowns and boolean slots match the built-in look. The
+// shades are worked out once per color and theme.
+const customShadesCache = new Map()
 function customShades(color, iconStyle) {
-  const shades = deriveShades(color)
-  return iconStyle === "high-contrast"
-    ? deriveHighContrastShades(shades)
-    : shades
+  const key = `${iconStyle}|${color}`
+  let shades = customShadesCache.get(key)
+  if (!shades) {
+    shades = deriveShades(color)
+    if (iconStyle === "high-contrast") {
+      shades = deriveHighContrastShades(shades)
+    }
+    customShadesCache.set(key, shades)
+  }
+  return shades
 }
 
 export class IconView {
@@ -231,9 +239,11 @@ export class InputView {
       } sb3-input sb3-input-${this.shape}`,
     })
 
-    const shades = parent.info.color
-      ? customShades(parent.info.color, iconStyle)
-      : null
+    // Only dropdowns and boolean slots take their color from the block.
+    const shades =
+      parent.info.color && (this.hasArrow || this.shape === "boolean")
+        ? customShades(parent.info.color, iconStyle)
+        : null
     if (this.isColor) {
       SVG.setProps(el, {
         fill: this.value,

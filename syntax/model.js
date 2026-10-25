@@ -39,7 +39,7 @@ import {
   unicodeIcons,
   hexColorPat,
 } from "./blocks.js"
-import { resolveShape } from "./shapes.js"
+import { resolveShape, packShapeNames } from "./shapes.js"
 
 export class Label {
   constructor(value, cls) {
@@ -263,11 +263,13 @@ export class Block {
         overrides += this.info.category
       }
     }
-    if (this.info.shapeIsDefault === false) {
+    const shapeText =
+      this.info.shapeIsDefault === false ? this.shapeOverrideText() : ""
+    if (shapeText) {
       if (overrides) {
         overrides += " "
       }
-      overrides += this.info.shape === "define-cat" ? "cat" : this.info.shape
+      overrides += shapeText
     }
     if (overrides) {
       // Overrides go on the opening line, before any body.
@@ -298,6 +300,26 @@ export class Block {
         : this.isBoolean
           ? `${diff_text}<${text}>`
           : diff_text + text
+  }
+
+  // The shape as it is written after `::`.
+  shapeOverrideText() {
+    const name = this.info.shape
+    // A define block found by its `define` word already has a define top, so
+    // only the rest is written: `define foo :: cat c`. Pack shape names are
+    // kept as they are.
+    if (
+      this.isDefine &&
+      this.children.some(child => child.isOutline) &&
+      !packShapeNames.has(name)
+    ) {
+      return this.shape.name
+        .split(" ")
+        .filter(word => word !== "define")
+        .map(word => (word === "define-cat" ? "cat" : word))
+        .join(" ")
+    }
+    return name
   }
 
   translate(lang, isShallow) {

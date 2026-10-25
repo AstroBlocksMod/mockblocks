@@ -645,7 +645,9 @@ export function applyOverrides(info, overrides) {
     } else if (isShapeWord(name)) {
       shape = applyShapeWord(shape || resolveShape(info.shape), name)
       shapeLabel = null
-    } else if (name in shapes) {
+    } else if (packShapeNames.has(name)) {
+      // Only names registered by packs. Built-in names such as `celse` and
+      // `outline` are internal and must not turn a line into a keyword.
       shape = shapes[name]
       shapeLabel = name
     } else if (name === "loop") {
