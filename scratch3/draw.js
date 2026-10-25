@@ -199,14 +199,6 @@ export default class SVG {
     })
   }
 
-  static capPath(w, h) {
-    return [SVG.getTop(w), SVG.getRightAndBottom(w, h, false, 0), "Z"]
-  }
-
-  static capRect(w, h, props) {
-    return SVG.path({ ...props, path: SVG.capPath(w, h) })
-  }
-
   static getHatTop(w) {
     return `M 0 16 c 25,-22 71,-22 96,0 L ${w - 4} 16 a 4 4 0 0 1 4 4`
   }
@@ -216,13 +208,6 @@ export default class SVG {
       c2.6,-2.3 5.5,-4.3 8.5,-6.2c-1,-12.5 5.3,-23.3 8.4,-24.8c3.7,-1.8 16.5,13.1 18.4,15.4c8.4,-1.3 17,-1.3 25.4,0c1.9,-2.3 14.7,-17.2 18.4,-15.4c3.1,1.5 9.4,12.3 8.4,24.8c3,1.8 5.9,3.9 8.5,6.1
       L ${w - 4} 32
       a 4 4 0 0 1 4 4`
-  }
-
-  static hatRect(w, h, props) {
-    return SVG.path({
-      ...props,
-      path: [SVG.getHatTop(w), SVG.getRightAndBottom(w, h, true, 0), "Z"],
-    })
   }
 
   static catParts() {
@@ -273,39 +258,12 @@ export default class SVG {
     ])
   }
 
-  static catHat(w, h, props) {
-    return SVG.group([
-      SVG.path({
-        ...props,
-        path: [SVG.getCatTop(w), SVG.getRightAndBottom(w, h, true, 0), "Z"],
-      }),
-      SVG.catParts(),
-    ])
-  }
-
   static getProcHatTop(w) {
     return `M 0 20 a 20 20 0 0 1 20 -20 L ${w - 20} 0 a 20,20 0 0,1 20,20`
   }
 
   static getProcCatTop(w) {
     return `M 0 20 c 0,-7.1 3.7,-13.3 9.3,-16.9 c 1.7,-7.5 5.4,-13.2 7.6,-14.2 c 2.6,-1.3 10,6 14.6,11.1 h 33 c 4.6,-5.1 11.9,-12.4 14.6,-11.1 c 1.9,0.9 4.9,5.2 6.8,11.1 h 7.8 L ${w - 20} 0 a 20,20 0 0,1 20,20`
-  }
-
-  static procHatRect(w, h, props) {
-    return SVG.path({
-      ...props,
-      path: [SVG.getProcHatTop(w), SVG.getRightAndBottom(w, h, true, 0), "Z"],
-    })
-  }
-
-  static procCatRect(w, h, props) {
-    return SVG.group([
-      SVG.path({
-        ...props,
-        path: [SVG.getProcCatTop(w), SVG.getRightAndBottom(w, h, true, 0), "Z"],
-      }),
-      SVG.move(0, -13, SVG.catParts()),
-    ])
   }
 
   // The path for the top edge of a command block, by shape top.
@@ -335,9 +293,10 @@ export default class SVG {
     return el
   }
 
-  // The outline of a command block without a mouth, built from its features.
-  static commandRect(w, h, shape, props) {
-    const el = SVG.path({
+  // The outline of a command block without a mouth, as a single path. Used
+  // on its own for diff glows, which only need the edge.
+  static commandPath(w, h, shape, props) {
+    return SVG.path({
       ...props,
       path: [
         SVG.getTopPath(w, shape.top),
@@ -345,14 +304,19 @@ export default class SVG {
         "Z",
       ],
     })
-    return SVG.withCatParts(el, shape.top)
+  }
+
+  // The outline of a command block without a mouth, built from its features.
+  static commandRect(w, h, shape, props) {
+    return SVG.withCatParts(SVG.commandPath(w, h, shape, props), shape.top)
   }
 
   // The outline of a command block with one or more mouths. `lines`
   // alternates between rows of children and the scripts inside the mouths.
   static mouthRect(w, h, isFinal, lines, props, shape) {
     const top = shape ? shape.top : "notch"
-    let y = lines[0].height
+    // A cat top starts its first row lower to make room for the ears.
+    let y = lines[0].y + lines[0].height
     const p = [SVG.getTopPath(w, top), SVG.getRightAndBottom(w, y, true, 16)]
     for (let i = 1; i < lines.length; i += 2) {
       const isLast = i + 2 === lines.length

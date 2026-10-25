@@ -666,7 +666,7 @@ function parseScripts(getLine) {
 
     if (b.hasScript) {
       while (true) {
-        const blocks = pMouth()
+        const blocks = pMouth(b)
         b.children.push(new Script(blocks))
         if (line && line.isElse) {
           for (const child of line.children) {
@@ -684,7 +684,7 @@ function parseScripts(getLine) {
     return b
   }
 
-  function pMouth() {
+  function pMouth(parent) {
     const blocks = []
     while (line) {
       if (line === "NL") {
@@ -692,6 +692,12 @@ function parseScripts(getLine) {
         continue
       }
       if (!line.isCommand) {
+        return blocks
+      }
+      // A hat closes an unterminated C block and starts a new script, as in
+      // Scratch. Only a hat that has a body itself, such as a class, can
+      // hold other hats.
+      if (line.isHat && !parent.isHat) {
         return blocks
       }
 

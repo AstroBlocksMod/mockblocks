@@ -16,6 +16,7 @@
 export const tops = ["notch", "hat", "cat", "define", "define-cat"]
 export const bottoms = ["puzzle", "flat"]
 export const outputs = ["round", "hex"]
+export const roles = ["else", "end"]
 
 const defaults = {
   top: "notch",
@@ -83,17 +84,48 @@ export function normalizeShape(def) {
   if (shape.output != null && !outputs.includes(shape.output)) {
     throw new Error(`Unknown shape output '${shape.output}'`)
   }
+  if (shape.role != null && !roles.includes(shape.role)) {
+    throw new Error(`Unknown shape role '${shape.role}'`)
+  }
   if (shape.ring) {
+    if (shape.output === "hex") {
+      throw new Error("A ring is round, so it cannot have a hex output")
+    }
     shape.output = "round"
   }
-  if (shape.output || shape.outline) {
+
+  // Features that do not combine are rejected rather than dropped, so that
+  // every shape has exactly one canonical name.
+  const extras = keys =>
+    keys.filter(key => key !== "name" && shape[key] !== defaults[key])
+  const commandKeys = ["top", "bottom", "mouth"]
+  if (shape.role) {
+    const others = extras(Object.keys(defaults).filter(k => k !== "role"))
+    if (others.length) {
+      throw new Error(
+        `A shape with role '${shape.role}' cannot also set ${others.join(", ")}`,
+      )
+    }
+  } else if (shape.outline) {
+    const others = extras([...commandKeys, "output", "ring"])
+    if (others.length) {
+      throw new Error(`An outline cannot also set ${others.join(", ")}`)
+    }
+  } else if (shape.output) {
     // Only commands have a top, a bottom and a mouth.
-    shape.top = "notch"
-    shape.bottom = "puzzle"
-    shape.mouth = false
+    const others = extras(commandKeys)
+    if (others.length) {
+      throw new Error(
+        `A ${shape.ring ? "ring" : `${shape.output} output`} cannot also set ${others.join(", ")}`,
+      )
+    }
   }
   shape.name = canonicalName(shape)
   return Object.freeze(shape)
+}
+
+function sameFeatures(a, b) {
+  return Object.keys(defaults).every(key => a[key] === b[key])
 }
 
 // Apply one word of a shape description, such as "hat" or "cap", to a shape.
@@ -146,12 +178,34 @@ export function shapeFromWords(words, base) {
   return normalizeShape(shape)
 }
 
-export function addShape(name, def) {
+// Names registered by packs, as opposed to built-in names and word lists.
+export const packShapeNames = new Set()
+
+export function addShape(name, def, fromPack) {
   if (name in shapes) {
     throw new Error(`Shape '${name}' is already registered`)
   }
   shapes[name] = normalizeShape(def)
+  if (fromPack) {
+    packShapeNames.add(name)
+  }
   return shapes[name]
+}
+
+// A pack may not take a built-in name, or a name made only of shape words
+// (such as "cat c"), since those already describe a shape of their own.
+export function checkPackShapeName(name) {
+  if (typeof name !== "string" || !/\S/.test(name)) {
+    throw new Error(`Invalid shape name '${name}'`)
+  }
+  if (name in builtin) {
+    throw new Error(`Shape name '${name}' is built in`)
+  }
+  if (name.split(/ +/).every(word => isShapeWord(word))) {
+    throw new Error(
+      `Shape name '${name}' is made of shape words, which already describe a shape`,
+    )
+  }
 }
 
 // Look a shape up by name. The name may be a registered name or a list of
@@ -178,8 +232,13 @@ export function shapeName(nameOrDef) {
   }
   if (typeof nameOrDef === "object") {
     const shape = normalizeShape(nameOrDef)
-    if (!(shape.name in shapes)) {
+    const existing = shapes[shape.name]
+    if (!existing) {
       shapes[shape.name] = shape
+    } else if (!sameFeatures(existing, shape)) {
+      // Canonical names are unique per set of features, so this means the
+      // name was taken by something else.
+      throw new Error(`Shape name '${shape.name}' is taken by another shape`)
     }
     return shape.name
   }

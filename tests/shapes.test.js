@@ -195,3 +195,88 @@ describe("packs with custom shapes", () => {
     ).toThrow(/already registered/)
   })
 })
+
+describe("review fixes", () => {
+  test("a hat after an unterminated C block starts a new script", () => {
+    const doc = parse("forever\nmove (10) steps\nwhen flag clicked\nsay [hi]")
+    expect(doc.scripts.length).toBe(2)
+    expect(doc.scripts[0].blocks[0].children.at(-1).blocks.length).toBe(1)
+    expect(doc.scripts[1].blocks[0].isHat).toBe(true)
+  })
+
+  test("a define hat after an unterminated repeat starts a new script", () => {
+    const doc = parse("repeat (10)\nmove (10) steps\ndefine bar\nsay [hi]")
+    expect(doc.scripts.length).toBe(2)
+    expect(doc.scripts[1].blocks[0].isDefine).toBe(true)
+  })
+
+  test("a hat leaves nested C blocks and is caught by an enclosing hat", () => {
+    const doc = parse("class [A]\nforever\nsay [x]\nmethod [m]\nend")
+    expect(doc.scripts.length).toBe(1)
+    const body = doc.scripts[0].blocks[0].children.at(-1)
+    expect(body.blocks.map(b => b.info.id)).toEqual([
+      "CONTROL_FOREVER",
+      "classes.method",
+    ])
+  })
+
+  test("pack shape names cannot be shape words or built-in names", () => {
+    for (const name of ["cat c", "hat", "c-block", "define-hat", "celse"]) {
+      expect(() =>
+        registerPack({
+          name: `claim-${name}`,
+          shapes: { [name]: { top: "hat" } },
+        }),
+      ).toThrow(/built in|shape words/)
+    }
+    expect(resolveShape("cat c")).toMatchObject({ top: "cat", mouth: true })
+  })
+
+  test("pack shape names cannot be category names", () => {
+    expect(() =>
+      registerPack({ name: "clash", shapes: { motion: { top: "hat" } } }),
+    ).toThrow(/already a category/)
+    expect(() =>
+      registerPack({
+        name: "clash2",
+        categories: { tower: "#123456" },
+        shapes: { tower: { top: "hat" } },
+      }),
+    ).toThrow(/already a category/)
+  })
+
+  test("a category cannot take a pack shape name", () => {
+    expect(() =>
+      registerPack({ name: "clash3", categories: { "class-hat": "#123456" } }),
+    ).toThrow(/override keyword/)
+  })
+
+  test("features that do not combine are rejected, not dropped", () => {
+    expect(() => normalizeShape({ role: "else", mouth: true })).toThrow(
+      /role 'else' cannot also set mouth/,
+    )
+    expect(() => normalizeShape({ role: "end", top: "hat" })).toThrow(
+      /cannot also set top/,
+    )
+    expect(() => normalizeShape({ output: "round", top: "hat" })).toThrow(
+      /cannot also set top/,
+    )
+    expect(() => normalizeShape({ ring: true, output: "hex" })).toThrow(/ring/)
+    expect(() => normalizeShape({ outline: true, mouth: true })).toThrow(
+      /outline/,
+    )
+    expect(() => normalizeShape({ role: "maybe" })).toThrow(/role/)
+    expect(() =>
+      registerPack({
+        name: "bad-role",
+        blocks: [
+          {
+            spec: "otherwise",
+            category: "control",
+            shape: { role: "else", mouth: true },
+          },
+        ],
+      }),
+    ).toThrow(/cannot also set mouth/)
+  })
+})

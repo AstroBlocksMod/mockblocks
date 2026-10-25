@@ -682,13 +682,13 @@ class GlowView {
     const w = this.width
     const h = this.height - 1
     if (c.isScript) {
-      if (!c.isEmpty && c.blocks[0].isHat) {
-        el = SVG.hatRect(w, h)
-      } else if (c.isFinal) {
-        el = SVG.capRect(w, h)
-      } else {
-        el = SVG.stackRect(w, h)
-      }
+      // The glow follows the script's outline: the top of its first block and
+      // a flat bottom if it ends in a cap.
+      const first = c.isEmpty ? null : c.blocks[0]
+      el = SVG.commandPath(w, h, {
+        top: first && first.isHat ? first.shape.top : "notch",
+        bottom: c.isFinal ? "flat" : "puzzle",
+      })
     } else {
       el = c.drawSelf(iconStyle, w, h, [])
     }

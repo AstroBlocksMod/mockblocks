@@ -7,11 +7,13 @@ import {
   notifyChange,
 } from "./registry.js"
 import {
-  shapes,
   addShape,
   normalizeShape,
   resolveShape,
   shapeName,
+  isShapeWord,
+  packShapeNames,
+  checkPackShapeName,
 } from "./shapes.js"
 import scratchPack from "./packs/scratch.js"
 
@@ -96,7 +98,8 @@ export const allBlocks = []
 // names could never be picked with an override, or would hide the keyword.
 function isReservedOverrideWord(name) {
   return (
-    overrideShapes.includes(name) ||
+    isShapeWord(name) ||
+    packShapeNames.has(name) ||
     name === "loop" ||
     name === "reset" ||
     name in aliasCategories ||
@@ -205,10 +208,20 @@ export function registerPack(pack) {
   const packCategories = new Set(newCategories.map(c => c.name))
 
   const newShapes = Object.entries(pack.shapes || {}).map(([name, def]) => {
-    if (name in shapes) {
+    checkPackShapeName(name)
+    if (packShapeNames.has(name)) {
       throw new Error(`Shape '${name}' is already registered`)
     }
-    return [name, normalizeShape(def)]
+    // Shape names and category names are both picked with `::`, so they
+    // must not overlap.
+    if (isKnownCategory(name) || packCategories.has(name)) {
+      throw new Error(`Shape name '${name}' is already a category`)
+    }
+    try {
+      return [name, normalizeShape(def)]
+    } catch (e) {
+      throw new Error(`${e.message} in shape '${name}'`, { cause: e })
+    }
   })
   const packShapes = new Set(newShapes.map(([name]) => name))
 
@@ -244,7 +257,7 @@ export function registerPack(pack) {
   // Everything checked out, so apply.
   newCategories.forEach(addCategory)
   for (const [name, shape] of newShapes) {
-    addShape(name, shape)
+    addShape(name, shape, true)
   }
   for (const info of blocks) {
     blocksById[info.id] = info
