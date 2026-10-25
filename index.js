@@ -101,7 +101,7 @@ export default function (window) {
       container = document.createElement("span")
       let cls = "mockblocks mockblocks-inline"
       if (doc.scripts[0] && !doc.scripts[0].isEmpty) {
-        cls += ` mockblocks-inline-${doc.scripts[0].blocks[0].shape}`
+        cls += ` mockblocks-inline-${doc.scripts[0].blocks[0].info.shape}`
       }
       container.className = cls
       container.style.display = "inline-block"

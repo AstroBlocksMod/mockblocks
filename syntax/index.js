@@ -25,6 +25,14 @@ export {
   onChange as onRegistryChange,
 } from "./registry.js"
 
+export {
+  shapes,
+  resolveShape,
+  normalizeShape,
+  shapeFromWords,
+  canonicalName,
+} from "./shapes.js"
+
 export { extensions, aliasExtensions } from "./extensions.js"
 
 export { default as scratchPack } from "./packs/scratch.js"

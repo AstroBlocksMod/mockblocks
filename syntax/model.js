@@ -39,6 +39,7 @@ import {
   unicodeIcons,
   hexColorPat,
 } from "./blocks.js"
+import { resolveShape } from "./shapes.js"
 
 export class Label {
   constructor(value, cls) {
@@ -179,29 +180,23 @@ export class Block {
     this.comment = comment || null
     this.diff = null
 
-    const shape = this.info.shape
-    this.isHat =
-      shape === "hat" ||
-      shape === "cat" ||
-      shape === "define-hat" ||
-      shape === "define-cat"
-    this.hasPuzzle =
-      shape === "stack" ||
-      shape === "hat" ||
-      shape === "cat" ||
-      shape === "c-block" ||
-      shape === "define-hat" ||
-      shape === "define-cat"
-    this.isFinal = /cap/.test(shape)
-    this.isCommand = shape === "stack" || shape === "cap" || /block/.test(shape)
-    this.isOutline = shape === "outline"
-    this.isReporter = shape === "reporter"
-    this.isBoolean = shape === "boolean"
+    // `info.shape` is the shape's name; `shape` holds its features.
+    const shape = (this.shape = resolveShape(this.info.shape))
+    const isCommand = !shape.output && !shape.outline
+    this.isHat = isCommand && shape.top !== "notch"
+    this.isDefine = shape.top === "define" || shape.top === "define-cat"
+    this.hasPuzzle = isCommand && shape.bottom === "puzzle"
+    this.isFinal = isCommand && shape.bottom === "flat"
+    // `else` and `end` lines are keywords, not blocks that stack.
+    this.isCommand = isCommand && !shape.role
+    this.isOutline = shape.outline
+    this.isReporter = shape.output === "round" && !shape.ring
+    this.isBoolean = shape.output === "hex"
 
-    this.isRing = shape === "ring"
-    this.hasScript = /block/.test(shape)
-    this.isElse = shape === "celse"
-    this.isEnd = shape === "cend"
+    this.isRing = shape.ring
+    this.hasScript = shape.mouth
+    this.isElse = shape.role === "else"
+    this.isEnd = shape.role === "end"
   }
   get isBlock() {
     return true
@@ -233,7 +228,7 @@ export class Block {
       .join("")
       .trim()
 
-    if (this.info.shape === "reporter" && hexColorPat.test(text)) {
+    if (this.isReporter && hexColorPat.test(text)) {
       return `(\\${text})`
     }
 
@@ -277,8 +272,8 @@ export class Block {
     }
     if (
       (text.startsWith("+") || text.startsWith("-")) &&
-      this.info.shape !== "reporter" &&
-      this.info.shape !== "boolean"
+      !this.isReporter &&
+      !this.isBoolean
     ) {
       text = `\\${text}`
     }
@@ -288,12 +283,12 @@ export class Block {
       ? diff_text +
           text +
           "\n" +
-          (Object.keys(lang.aliases).find(
+          (Object.keys((lang && lang.aliases) || {}).find(
             key => lang.aliases[key] === "mockblocks:end",
           ) || "end")
-      : this.info.shape === "reporter"
+      : this.isReporter
         ? `${diff_text}(${text})`
-        : this.info.shape === "boolean"
+        : this.isBoolean
           ? `${diff_text}<${text}>`
           : diff_text + text
   }

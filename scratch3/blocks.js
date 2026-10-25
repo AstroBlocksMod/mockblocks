@@ -320,35 +320,16 @@ class BlockView {
     }
   }
 
-  static get shapes() {
-    return {
-      stack: SVG.stackRect,
-      "c-block": SVG.stackRect,
-      "if-block": SVG.stackRect,
-      celse: SVG.stackRect,
-      cend: SVG.stackRect,
-
-      cap: SVG.capRect,
-      reporter: SVG.pillRect,
-      boolean: SVG.pointedRect,
-      hat: SVG.hatRect,
-      cat: SVG.catHat,
-      "define-hat": SVG.procHatRect,
-      "define-cat": SVG.procCatRect,
-      ring: SVG.pillRect,
-    }
-  }
-
   drawSelf(iconStyle, w, h, lines) {
+    const props = { class: `sb3-${this.info.category}` }
+
     // mouths
     if (lines.length > 1) {
-      return SVG.mouthRect(w, h, this.isFinal, lines, {
-        class: `sb3-${this.info.category}`,
-      })
+      return SVG.mouthRect(w, h, this.isFinal, lines, props, this.shape)
     }
 
     // outlines
-    if (this.info.shape === "outline") {
+    if (this.isOutline) {
       return SVG.setProps(SVG.stackRect(w, h), {
         class: `sb3-${this.info.category} sb3-${this.info.category}-alt`,
       })
@@ -358,30 +339,34 @@ class BlockView {
     if (this.isRing) {
       const child = this.children[0]
       if (child && (child.isInput || child.isBlock || child.isScript)) {
-        return SVG.roundRect(w, h, {
-          class: `sb3-${this.info.category}`,
-        })
+        return SVG.roundRect(w, h, props)
       }
+      return SVG.pillRect(w, h, props)
     }
 
-    const func = BlockView.shapes[this.info.shape]
-    if (!func) {
-      throw new Error(`no shape func: ${this.info.shape}`)
+    if (this.isReporter) {
+      return SVG.pillRect(w, h, props)
     }
-    return func(w, h, {
-      class: `sb3-${this.info.category}`,
-    })
+    if (this.isBoolean) {
+      return SVG.pointedRect(w, h, props)
+    }
+    return SVG.commandRect(w, h, this.shape, props)
   }
 
   static get padding() {
-    // top, bottom, comment Y offset
+    // top, bottom, comment Y offset, by shape top
     return {
       hat: [24, 8, 17],
-      cat: [24, 8, 49], // add 16*2 (see L435)
-      "define-hat": [20, 16, 0],
+      cat: [24, 8, 49], // add 16*2 (see `y` in draw)
+      define: [20, 16, 0],
       "define-cat": [20, 16, 0],
-      null: [4, 4, 0],
+      notch: [4, 4, 0],
     }
+  }
+
+  static paddingFor(block) {
+    const top = block.isCommand || block.hasScript ? block.shape.top : "notch"
+    return BlockView.padding[top] || BlockView.padding.notch
   }
 
   horizontalPadding(child) {
@@ -426,26 +411,27 @@ class BlockView {
   }
 
   draw(iconStyle) {
-    const isDefine =
-      this.info.shape === "define-hat" || this.info.shape === "define-cat"
+    const isDefine = this.isDefine
     let children = this.children
-    const isCommand = this.isCommand
+    // Rows with a notch cut into their top edge need 8 more pixels, and their
+    // first input lines up with the right of the notch. Hats have no notch.
+    const hasNotch = this.isCommand && this.shape.top === "notch"
 
-    const padding = BlockView.padding[this.info.shape] || BlockView.padding.null
+    const padding = BlockView.paddingFor(this)
     const pt = padding[0],
       pb = padding[1]
 
-    let y = this.info.shape === "cat" ? 16 : 0
-    const Line = function (y) {
+    let y = this.shape.top === "cat" ? 16 : 0
+    const Line = function (y, height) {
       this.y = y
       this.width = 0
-      this.height = isCommand ? 40 : 32
+      this.height = height
       this.children = []
     }
 
     let innerWidth = 0
     let scriptWidth = 0
-    let line = new Line(y)
+    let line = new Line(y, hasNotch ? 40 : 32)
     const pushLine = () => {
       if (lines.length === 0) {
         line.height += pt + pb
@@ -492,7 +478,8 @@ class BlockView {
         scriptWidth = Math.max(scriptWidth, Math.max(1, child.width))
         child.height = Math.max(29, child.height + 3) - 2
         y += child.height
-        line = new Line(y)
+        // The arm below a mouth always has a notch, whatever the top is.
+        line = new Line(y, 40)
         previousChild = null
       } else if (child.isArrow) {
         line.children.push(child)
@@ -512,7 +499,7 @@ class BlockView {
         if (children[0] != null) {
           const cmw = 48 - this.horizontalPadding(children[0])
           if (
-            (this.isCommand || this.isOutline) &&
+            (hasNotch || this.isOutline) &&
             !child.isLabel &&
             !child.isIcon &&
             line.width < cmw
@@ -522,7 +509,7 @@ class BlockView {
         }
 
         // Align extension category icons below notch
-        if (child.isIcon && i === 0 && this.isCommand) {
+        if (child.isIcon && i === 0 && hasNotch) {
           line.height = Math.max(line.height, child.height + 8)
         }
 
@@ -598,7 +585,7 @@ class BlockView {
           y += 3
         } else if (child.isIcon) {
           y += child.dy | 0
-          if (this.isCommand && i === 0 && j === 0) {
+          if (hasNotch && i === 0 && j === 0) {
             y += 4
           }
         }
@@ -623,7 +610,7 @@ class BlockView {
 
     const group = SVG.group(objects)
 
-    if (this.info.shape === "define-cat") {
+    if (this.shape.top === "define-cat") {
       // TODO properly handle this case
       this.height += 16
       return SVG.group([SVG.move(0, 16, group)]) // Wrap in group to ensure transform is not overridden
@@ -765,8 +752,7 @@ class ScriptView {
       if (comment) {
         const line = block.firstLine
         const cx = block.innerWidth + 2 + CommentView.lineLength
-        const padding =
-          BlockView.padding[block.info.shape] || BlockView.padding.null
+        const padding = BlockView.paddingFor(block)
         const cy =
           y - block.height + (line.height - padding[2]) / 2 + padding[2] // ensure hat block comments are attached to middle of solid part
         const el = comment.draw(iconStyle)

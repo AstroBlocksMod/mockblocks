@@ -6,29 +6,19 @@ import {
   normalizeCategory,
   notifyChange,
 } from "./registry.js"
+import {
+  shapes,
+  addShape,
+  normalizeShape,
+  resolveShape,
+  shapeName,
+} from "./shapes.js"
 import scratchPack from "./packs/scratch.js"
 
 export const aliasCategories = Object.assign(Object.create(null), {
   gray: "grey",
   other: "grey",
 })
-
-// Shapes a block definition may use.
-export const knownShapes = [
-  "stack",
-  "cap",
-  "hat",
-  "cat",
-  "define-hat",
-  "define-cat",
-  "c-block",
-  "c-block cap",
-  "celse",
-  "cend",
-  "reporter",
-  "boolean",
-  "ring",
-]
 
 // Shapes that may be set with `:: shape` overrides.
 const overrideShapes = [
@@ -123,13 +113,25 @@ export function isKnownCategory(name) {
   )
 }
 
-function normalizeBlock(def, pack, packCategories) {
+function normalizeBlock(def, pack, packCategories, packShapes) {
   if (!def.spec) {
     throw new Error(
       `Missing spec in pack '${pack.name}': ${JSON.stringify(def)}`,
     )
   }
-  const shape = def.shape || "stack"
+  // A shape is a registered name, a list of shape words such as "hat c", or a
+  // feature object.
+  const label = def.id || def.selector || def.spec
+  let shape
+  if (typeof def.shape === "string" && packShapes.has(def.shape)) {
+    shape = def.shape
+  } else {
+    try {
+      shape = shapeName(def.shape)
+    } catch (e) {
+      throw new Error(`${e.message} for block '${label}'`, { cause: e })
+    }
+  }
   let id = def.id
   if (!id) {
     // Scratch 2 blocks are identified by their selector. Anything else gets an
@@ -138,9 +140,6 @@ function normalizeBlock(def, pack, packCategories) {
     id = def.selector
       ? `sb2:${def.selector}`
       : `${pack.name}:${shape}:${hashSpec(def.spec)}`
-  }
-  if (!knownShapes.includes(shape)) {
-    throw new Error(`Unknown shape '${shape}' for block '${id}'`)
   }
   const category = def.category || pack.category
   if (!category) {
@@ -172,8 +171,10 @@ function normalizeBlock(def, pack, packCategories) {
  *   mockblocks.registerPack({
  *     name: "rockets",
  *     categories: { rocket: { color: "#4c6ef5" } },
+ *     shapes: { "launch-hat": { top: "hat", mouth: true } },
  *     blocks: [
  *       { id: "rockets.launch", spec: "launch %1", inputs: ["%s"], shape: "stack", category: "rocket" },
+ *       { id: "rockets.countdown", spec: "countdown from %1", inputs: ["%n"], shape: "launch-hat", category: "rocket" },
  *     ],
  *     aliases: { "lift off %1": "rockets.launch" },
  *   })
@@ -203,9 +204,22 @@ export function registerPack(pack) {
   )
   const packCategories = new Set(newCategories.map(c => c.name))
 
+  const newShapes = Object.entries(pack.shapes || {}).map(([name, def]) => {
+    if (name in shapes) {
+      throw new Error(`Shape '${name}' is already registered`)
+    }
+    return [name, normalizeShape(def)]
+  })
+  const packShapes = new Set(newShapes.map(([name]) => name))
+
   const seen = new Set()
   const blocks = (pack.blocks || []).map(def => {
-    const { explicitId, ...info } = normalizeBlock(def, pack, packCategories)
+    const { explicitId, ...info } = normalizeBlock(
+      def,
+      pack,
+      packCategories,
+      packShapes,
+    )
     if (blocksById[info.id] || seen.has(info.id)) {
       throw new Error(
         explicitId
@@ -229,6 +243,9 @@ export function registerPack(pack) {
 
   // Everything checked out, so apply.
   newCategories.forEach(addCategory)
+  for (const [name, shape] of newShapes) {
+    addShape(name, shape)
+  }
   for (const info of blocks) {
     blocksById[info.id] = info
     allBlocks.push(info)
@@ -570,15 +587,11 @@ export function lookupHash(hash, info, children, languages) {
   for (const lang of languages) {
     if (Object.prototype.hasOwnProperty.call(lang.blocksByHash, hash)) {
       const collisions = lang.blocksByHash[hash]
+      const parsed = resolveShape(info.shape)
       for (let block of collisions) {
-        if (
-          info.shape === "reporter" &&
-          block.shape !== "reporter" &&
-          block.shape !== "ring"
-        ) {
-          continue
-        }
-        if (info.shape === "boolean" && block.shape !== "boolean") {
+        // A `( )` line only matches round blocks, a `< >` line only booleans.
+        const candidate = resolveShape(block.shape)
+        if (parsed.output && parsed.output !== candidate.output) {
           continue
         }
         if (collisions.length > 1) {
@@ -620,7 +633,7 @@ export function applyOverrides(info, overrides) {
     } else if (isKnownCategory(name)) {
       info.category = name
       info.categoryIsDefault = false
-    } else if (name === "cat" && info.shape === "define-hat") {
+    } else if (name === "cat" && resolveShape(info.shape).top === "define") {
       info.shape = "define-cat"
       info.shapeIsDefault = false
     } else if (overrideShapes.includes(name)) {

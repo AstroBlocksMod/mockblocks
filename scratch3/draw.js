@@ -308,9 +308,52 @@ export default class SVG {
     ])
   }
 
-  static mouthRect(w, h, isFinal, lines, props) {
+  // The path for the top edge of a command block, by shape top.
+  static getTopPath(w, top) {
+    switch (top) {
+      case "hat":
+        return SVG.getHatTop(w)
+      case "cat":
+        return SVG.getCatTop(w)
+      case "define":
+        return SVG.getProcHatTop(w)
+      case "define-cat":
+        return SVG.getProcCatTop(w)
+      default:
+        return SVG.getTop(w)
+    }
+  }
+
+  // Cat hats have ears and a face drawn on top of the outline.
+  static withCatParts(el, top) {
+    if (top === "cat") {
+      return SVG.group([el, SVG.catParts()])
+    }
+    if (top === "define-cat") {
+      return SVG.group([el, SVG.move(0, -13, SVG.catParts())])
+    }
+    return el
+  }
+
+  // The outline of a command block without a mouth, built from its features.
+  static commandRect(w, h, shape, props) {
+    const el = SVG.path({
+      ...props,
+      path: [
+        SVG.getTopPath(w, shape.top),
+        SVG.getRightAndBottom(w, h, shape.bottom === "puzzle", 0),
+        "Z",
+      ],
+    })
+    return SVG.withCatParts(el, shape.top)
+  }
+
+  // The outline of a command block with one or more mouths. `lines`
+  // alternates between rows of children and the scripts inside the mouths.
+  static mouthRect(w, h, isFinal, lines, props, shape) {
+    const top = shape ? shape.top : "notch"
     let y = lines[0].height
-    const p = [SVG.getTop(w), SVG.getRightAndBottom(w, y, true, 16)]
+    const p = [SVG.getTopPath(w, top), SVG.getRightAndBottom(w, y, true, 16)]
     for (let i = 1; i < lines.length; i += 2) {
       const isLast = i + 2 === lines.length
 
@@ -329,7 +372,7 @@ export default class SVG {
       p.push(SVG.getRightAndBottom(w, y, hasNotch, inset))
     }
     p.push("Z")
-    return SVG.path({ ...props, path: p })
+    return SVG.withCatParts(SVG.path({ ...props, path: p }), top)
   }
 
   static commentRect(w, h, props) {
