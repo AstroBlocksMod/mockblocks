@@ -27,6 +27,9 @@ import {
   iconPat,
   blockName,
   aliasCategories,
+  blocksById,
+  parseSpec,
+  parseInputNumber,
 } from "./blocks.js"
 import { resolveShape } from "./shapes.js"
 
@@ -781,11 +784,126 @@ function callShape(block) {
   return block.isBoolean ? "boolean" : block.isReporter ? "reporter" : "stack"
 }
 
+function colorArgument(block, style) {
+  block.info.category = style.category
+  if (style.color) {
+    block.info.color = style.color
+  }
+  block.info.categoryIsDefault = false
+  block.info.selector = "getParam"
+}
+
+// Input numbers in the order a spec has them, such as [2, 1] for
+// "with %2 when I get %1".
+const inputOrders = new Map()
+function inputOrder(spec) {
+  if (!inputOrders.has(spec)) {
+    inputOrders.set(spec, parseSpec(spec).inputs.map(parseInputNumber))
+  }
+  return inputOrders.get(spec)
+}
+
+// The reporters in the inputs a pack block lists in `arguments`, such as
+// `(points)` in `when I receive [score v] with (points)`.
+function argumentBlocks(block) {
+  const type = blocksById[block.info.id]
+  const lang = block.info.language
+  if (!type || !type.arguments.length || !lang) {
+    return []
+  }
+  // The block may be written as an alias that has its inputs in another
+  // order, so use the spec that matched.
+  const spec = [
+    lang.commands[type.id],
+    ...(lang.nativeAliases[type.id] || []),
+  ].find(spec => spec && hashSpec(spec) === block.info.hash)
+  if (!spec) {
+    return []
+  }
+  const order = inputOrder(spec)
+  const inputs = block.children.filter(child => !child.isLabel && !child.isIcon)
+  return type.arguments
+    .map(n => inputs[order.indexOf(n)])
+    .filter(
+      child =>
+        child &&
+        child.isBlock &&
+        (child.isReporter || child.isBoolean) &&
+        blockName(child) !== undefined,
+    )
+}
+
+// Color the arguments of pack blocks and the uses of their names. A block's
+// arguments can be used in its own inputs and body, such as a lambda's, and a
+// hat's arguments in the rest of the script it starts, up to the next hat.
+// `scopes` holds a map from names to colors for each enclosing block, and an
+// inner name hides an outer one.
+function colorArgumentsInScript(script, scopes) {
+  let current = scopes
+  for (const block of script.blocks) {
+    const inner = block.isGlow ? block.child : block
+    if (inner.isBlock && inner.isHat) {
+      current = scopes
+    }
+    const names = colorArguments(block, current)
+    if (names && inner.isHat) {
+      current = [...scopes, names]
+    }
+  }
+}
+
+function colorArguments(node, scopes) {
+  if (node.isScript) {
+    colorArgumentsInScript(node, scopes)
+    return
+  }
+  if (node.isGlow) {
+    return colorArguments(node.child, scopes)
+  }
+  if (!node.isBlock) {
+    return
+  }
+
+  if (node.info.categoryIsDefault && (node.isReporter || node.isBoolean)) {
+    const name = blockName(node)
+    const scope = scopes.findLast(scope => scope.has(name))
+    if (scope) {
+      colorArgument(node, scope.get(name))
+    }
+  }
+
+  const args = argumentBlocks(node)
+  let names = null
+  if (args.length) {
+    const category = blocksById[node.info.id].argumentCategory
+    names = new Map()
+    for (const arg of args) {
+      if (arg.info.categoryIsDefault) {
+        colorArgument(arg, { category })
+      }
+      names.set(blockName(arg), {
+        category: arg.info.category,
+        color: arg.info.color,
+      })
+    }
+  }
+  const inner = names ? [...scopes, names] : scopes
+  for (const child of node.children) {
+    if (!args.includes(child)) {
+      colorArguments(child, inner)
+    }
+  }
+  return names
+}
+
 function recogniseStuff(scripts) {
   const customBlocksByHash = Object.create(null)
   const listNames = new Set()
 
   scripts.forEach(script => {
+    // Pack block arguments come first, so that a lambda's argument hides a
+    // custom block argument with the same name.
+    colorArgumentsInScript(script, [])
     const customArgs = new Set()
 
     eachBlock(script, block => {
@@ -856,9 +974,7 @@ function recogniseStuff(scripts) {
       ) {
         const name = blockName(block)
         if (customArgs.has(name)) {
-          block.info.category = "custom-arg"
-          block.info.categoryIsDefault = false
-          block.info.selector = "getParam"
+          colorArgument(block, { category: "custom-arg" })
         }
 
         // list names

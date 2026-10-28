@@ -21,7 +21,7 @@ The public global and package name is `mockblocks`. The text syntax is the scrat
 
 ## Packs
 
-A pack is a plain object: `{ name, categories, shapes, blocks, aliases }`. A block's `shape` can be a registered name, shape words such as `"hat c"`, or a feature object such as `{ top: "hat", mouth: true }`. Register it with `mockblocks.registerPack(pack)` (or `registerPack` from `syntax/index.js`). Registration is all or nothing: an invalid block, category or alias throws and leaves the registry untouched. Category names become CSS classes (`.sb3-<name>`), so they must be simple identifiers. The page stylesheet is regenerated when a pack is registered after `appendStyles()` ran.
+A pack is a plain object: `{ name, categories, shapes, blocks, aliases }`. A block's `shape` can be a registered name, shape words such as `"hat c"`, or a feature object such as `{ top: "hat", mouth: true }`. Register it with `mockblocks.registerPack(pack)` (or `registerPack` from `syntax/index.js`). Registration is all or nothing: an invalid block, category or alias throws and leaves the registry untouched. A block can list `arguments` (input numbers) and an `argumentCategory`; `recogniseStuff()` in `syntax/syntax.js` colors those argument reporters and the same names inside the block, and in the rest of the script under a hat. Category names become CSS classes (`.sb3-<name>`), so they must be simple identifiers. The page stylesheet is regenerated when a pack is registered after `appendStyles()` ran.
 
 ## Overrides
 

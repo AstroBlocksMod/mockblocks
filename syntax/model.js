@@ -354,9 +354,12 @@ export class Block {
       return
     }
 
+    // Arguments, including those of pack blocks that take another color,
+    // keep their names.
     if (
       this.info.category === "custom-arg" ||
-      this.info.category === "custom"
+      this.info.category === "custom" ||
+      this.info.selector === "getParam"
     ) {
       return
     }

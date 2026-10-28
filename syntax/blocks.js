@@ -146,6 +146,30 @@ function normalizeBlock(def, pack, packCategories, packShapes) {
   ) {
     throw new Error(`Unknown category '${category}' for block '${id}'`)
   }
+  // Inputs that name arguments for the block's body, or for the rest of the
+  // script under a hat, as in `when I receive [x v] with (points)`.
+  const args = def.arguments == null ? [] : def.arguments
+  const specInputs = def.spec.match(inputPatGlobal) || []
+  if (
+    !Array.isArray(args) ||
+    !args.every(n => Number.isInteger(n) && specInputs.includes(`%${n}`))
+  ) {
+    throw new Error(
+      `Invalid arguments ${JSON.stringify(def.arguments)} for block '${id}'`,
+    )
+  }
+  const argumentCategory =
+    aliasCategories[def.argumentCategory || category] ||
+    def.argumentCategory ||
+    category
+  if (
+    !isKnownCategory(argumentCategory) &&
+    !packCategories.has(argumentCategory)
+  ) {
+    throw new Error(
+      `Unknown argument category '${argumentCategory}' for block '${id}'`,
+    )
+  }
   return {
     explicitId: !!(def.id || def.selector),
     id, // Used for Scratch 3 translations
@@ -156,6 +180,8 @@ function normalizeBlock(def, pack, packCategories, packShapes) {
     shape,
     category,
     hasLoopArrow: !!def.hasLoopArrow,
+    arguments: args,
+    argumentCategory: args.length ? argumentCategory : undefined,
     pack: pack.name,
   }
 }
