@@ -180,7 +180,7 @@ A block's `shape` is a shape name (`stack`, `hat`, `cap`, `c-block`, `reporter`,
 
 ### Bundled packs
 
-`mockblocks.packs.jscratch` has draft blocks for the advanced language features on the [jScratch roadmap](https://github.com/AstroBlocksMod/jScratch/blob/main/docs/roadmap.md): functions (`return`, `local`), macros (`define macro`) and objects (`class`, `field`, `method`, `new`, `this`, `field of`, `set field of`, `call on`). jScratch has not designed these blocks yet, so treat the wording as a placeholder. It is not registered by default:
+`mockblocks.packs.jscratch` has draft blocks for the advanced language features on the [jScratch roadmap](https://github.com/AstroBlocksMod/jScratch/blob/main/docs/roadmap.md): functions (`return`, `local`), macros (`define macro`), objects (`class`, `field`, `method`, `new`, `this`, `field of`, `set field of`, `call on`), lambdas (`function`, `call with`, `run with`, `after seconds run`, `keep items of where`, `sort by`), maps (`empty map`, `key of`, `set key`, `change key`, `remove key`, `has key`, `number of keys in`, `for each key`), variables declared in code (`declare`, `variable for`, `list for`) and broadcasts with data (`broadcast with`, `when I receive with`, `create clone of with`, `when I start as a clone with`). jScratch has not designed these blocks yet, so treat the wording as a placeholder. It is not registered by default:
 
 ```js
 mockblocks.registerPack(mockblocks.packs.jscratch)

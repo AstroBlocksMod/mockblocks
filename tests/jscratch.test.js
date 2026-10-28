@@ -1,4 +1,10 @@
-import { parse, registerPack, jscratchPack } from "../syntax/index.js"
+import {
+  parse,
+  registerPack,
+  jscratchPack,
+  allBlocks,
+} from "../syntax/index.js"
+import { hashSpec } from "../syntax/blocks.js"
 
 function parseScript(code) {
   const doc = parse(code)
@@ -95,5 +101,173 @@ describe("jscratch pack: functions and macros", () => {
   test("Scratch's own define still works", () => {
     const b = parseBlock("define jump (height)")
     expect(b.info).toMatchObject({ category: "custom", selector: "procDef" })
+  })
+})
+
+describe("jscratch pack: lambdas", () => {
+  test("a lambda wraps an expression, with its arguments first", () => {
+    const b = parseBlock("(function (x) ((x) * (2)))")
+    expect(b.info).toMatchObject({
+      id: "jscratch.function1",
+      category: "custom",
+    })
+    expect(b.isReporter).toBe(true)
+    expect(parseBlock("(function (a) (b) ((a) + (b)))").info.id).toBe(
+      "jscratch.function2",
+    )
+  })
+
+  test("a lambda can hold a stack of blocks", () => {
+    const b = parseBlock(`(function (name) {
+say (name)
+play sound (fanfare v) until done
+})`)
+    expect(b.info.id).toBe("jscratch.function1")
+    const body = b.children.find(c => c.isScript)
+    expect(body.blocks.map(x => x.info.id)).toEqual([
+      "LOOKS_SAY",
+      "SOUND_PLAYUNTILDONE",
+    ])
+  })
+
+  test("lambdas are called, run and passed to list blocks", () => {
+    expect(parseBlock("(call (double) with (21))").info.id).toBe(
+      "jscratch.callFunction",
+    )
+    expect(parseBlock("run (greet) with [Ada]").info.id).toBe(
+      "jscratch.runFunction",
+    )
+    expect(
+      parseBlock("after (2) seconds run (function {clear graphic effects})")
+        .info,
+    ).toMatchObject({ id: "jscratch.runAfter", category: "control" })
+    expect(
+      parseBlock("keep items of [enemies v] where (function (e) <(e) > (0)>)")
+        .info.id,
+    ).toBe("jscratch.keepItems")
+    expect(parseBlock("sort [enemies v] by (function (e) (e))").info.id).toBe(
+      "jscratch.sortList",
+    )
+  })
+
+  test("call with does not take over call on", () => {
+    expect(parseBlock("call [jump] on (player)").info.id).toBe("jscratch.call")
+  })
+})
+
+describe("jscratch pack: maps", () => {
+  test("map reporters and booleans use the list color", () => {
+    expect(parseBlock("(empty map)").info).toMatchObject({
+      id: "jscratch.emptyMap",
+      category: "list",
+    })
+    expect(parseBlock("(key [sword] of (prices))").info.id).toBe(
+      "jscratch.keyOf",
+    )
+    expect(parseBlock("(number of keys in (prices))").info.id).toBe(
+      "jscratch.numberOfKeys",
+    )
+    const has = parseBlock("<(prices) has key [sword]?>")
+    expect(has.info.id).toBe("jscratch.hasKey")
+    expect(has.isBoolean).toBe(true)
+  })
+
+  test("map stack blocks", () => {
+    const s = parseScript(`set key [sword] of (prices) to (50)
+change key (thing) of (inventory) by (1)
+remove key (thing) from (prices)`)
+    expect(s.blocks.map(b => b.info.id)).toEqual([
+      "jscratch.setKey",
+      "jscratch.changeKey",
+      "jscratch.removeKey",
+    ])
+  })
+
+  test("for each key is a C block", () => {
+    const b = parseBlock(`for each key [name v] in (inventory)
+say (name)
+end`)
+    expect(b.info.id).toBe("jscratch.forEachKey")
+    expect(b.hasScript).toBe(true)
+  })
+
+  test("Scratch's own item of still works", () => {
+    expect(parseBlock("(item (1) of [enemies v])").info.id).toBe(
+      "DATA_ITEMOFLIST",
+    )
+  })
+})
+
+describe("jscratch pack: declared variables", () => {
+  const declareCode = `declare
+  variable [score] for [all sprites v] = (0)
+  list [high scores] for [all sprites v]
+end`
+
+  test("declare is a capped hat that holds variables and lists", () => {
+    const b = parseBlock(declareCode)
+    expect(b.info).toMatchObject({
+      id: "jscratch.declare",
+      category: "variables",
+    })
+    expect(b.isHat).toBe(true)
+    expect(b.hasScript).toBe(true)
+    expect(b.shape.bottom).toBe("flat")
+    const body = b.children.find(c => c.isScript)
+    expect(body.blocks.map(x => x.info)).toMatchObject([
+      { id: "jscratch.declareVariable", category: "variables" },
+      { id: "jscratch.declareList", category: "list" },
+    ])
+    expect(b.stringify()).toBe(declareCode)
+  })
+})
+
+describe("jscratch pack: broadcasts with data", () => {
+  test("broadcasts carry a value", () => {
+    expect(parseBlock("broadcast [score v] with (10)").info).toMatchObject({
+      id: "jscratch.broadcastWith",
+      category: "events",
+    })
+    expect(parseBlock("broadcast [score v] with (10) and wait").info.id).toBe(
+      "jscratch.broadcastWithAndWait",
+    )
+    const hat = parseBlock("when I receive [score v] with (points)")
+    expect(hat.info.id).toBe("jscratch.whenIReceiveWith")
+    expect(hat.isHat).toBe(true)
+  })
+
+  test("clones get a value from the script that made them", () => {
+    expect(
+      parseBlock("create clone of [myself v] with (10)").info,
+    ).toMatchObject({ id: "jscratch.createCloneWith", category: "control" })
+    const hat = parseBlock("when I start as a clone with (start x)")
+    expect(hat.info.id).toBe("jscratch.whenStartAsCloneWith")
+    expect(hat.isHat).toBe(true)
+  })
+
+  test("Scratch's own broadcast and clone blocks still work", () => {
+    const s = parseScript(`when I receive [score v]
+broadcast [score v]
+broadcast [score v] and wait
+create clone of [myself v]`)
+    expect(s.blocks.map(b => b.info.id)).toEqual([
+      "EVENT_WHENBROADCASTRECEIVED",
+      "EVENT_BROADCAST",
+      "EVENT_BROADCASTANDWAIT",
+      "CONTROL_CREATECLONEOF",
+    ])
+    expect(parseBlock("when I start as a clone").info.id).toBe(
+      "CONTROL_STARTASCLONE",
+    )
+  })
+})
+
+describe("jscratch pack: Scratch blocks", () => {
+  test("no jscratch spec has the same text as a Scratch block", () => {
+    const scratch = new Set(
+      allBlocks.filter(b => b.pack === "scratch").map(b => hashSpec(b.spec)),
+    )
+    const taken = jscratchPack.blocks.filter(b => scratch.has(hashSpec(b.spec)))
+    expect(taken.map(b => b.spec)).toEqual([])
   })
 })
