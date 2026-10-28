@@ -106,49 +106,58 @@ function paintBlock(info, children, languages) {
 
         // Move the children of the define block into an "outline", transforming
         // () and [] shapes as we go.
-        const outlineChildren = children
-          .splice(
-            lang.definePrefix.length,
-            children.length - lang.defineSuffix.length,
-          )
-          .map(child => {
-            if (child.isInput && child.isBoolean) {
-              // Convert empty boolean slot to empty boolean argument.
-              child = paintBlock(
-                {
-                  shape: "boolean",
-                  argument: "boolean",
-                  category: "custom-arg",
-                },
-                [new Label("")],
-                languages,
-              )
-            } else if (
-              child.isInput &&
-              (child.shape === "string" || child.shape === "number")
-            ) {
-              // Convert string inputs to string arguments, number inputs to number arguments.
-              const labels = child.value
-                .split(/ +/g)
-                .map(word => new Label(word))
-              child = paintBlock(
-                {
-                  shape: "reporter",
-                  argument: child.shape === "string" ? "string" : "number",
-                  category: "custom-arg",
-                },
-                labels,
-                languages,
-              )
-            } else if (child.isReporter || child.isBoolean) {
-              // Convert variables to number arguments, predicates to boolean arguments.
-              if (child.info.categoryIsDefault) {
-                child.info.category = "custom-arg"
-              }
-              child.info.argument = child.isBoolean ? "boolean" : "number"
+        const toArgument = child => {
+          if (child.isInput && child.isBoolean) {
+            // Convert empty boolean slot to empty boolean argument.
+            child = paintBlock(
+              {
+                shape: "boolean",
+                argument: "boolean",
+                category: "custom-arg",
+              },
+              [new Label("")],
+              languages,
+            )
+          } else if (
+            child.isInput &&
+            (child.shape === "string" || child.shape === "number")
+          ) {
+            // Convert string inputs to string arguments, number inputs to number arguments.
+            const labels = child.value.split(/ +/g).map(word => new Label(word))
+            child = paintBlock(
+              {
+                shape: "reporter",
+                argument: child.shape === "string" ? "string" : "number",
+                category: "custom-arg",
+              },
+              labels,
+              languages,
+            )
+          } else if (child.isReporter || child.isBoolean) {
+            // Convert variables to number arguments, predicates to boolean arguments.
+            if (child.info.categoryIsDefault) {
+              child.info.category = "custom-arg"
             }
-            return child
-          })
+            child.info.argument = child.isBoolean ? "boolean" : "number"
+          }
+          return child
+        }
+        let outlineChildren = children.splice(
+          lang.definePrefix.length,
+          children.length - lang.defineSuffix.length,
+        )
+        if (outlineChildren.length === 1 && isPrototype(outlineChildren[0])) {
+          // `define (fibonacci (n))` defines a reporter, so the reporter is
+          // the custom block itself and its inputs are the arguments.
+          const prototype = outlineChildren[0]
+          prototype.info.isPrototype = true
+          prototype.info.category = "custom"
+          delete prototype.info.id
+          delete prototype.info.selector
+          prototype.children = prototype.children.map(toArgument)
+        } else {
+          outlineChildren = outlineChildren.map(toArgument)
+        }
 
         const outlineInfo = {
           shape: "outline",
@@ -185,6 +194,21 @@ function paintBlock(info, children, languages) {
   block.diff = info.diff
 
   return block
+}
+
+// A reporter or boolean with inputs of its own that is all there is in a
+// define, as in `define (fibonacci (n))`. It has to be a block mockblocks does
+// not know, or be marked `:: custom`. A plain `define (n)` is still one
+// argument.
+function isPrototype(block) {
+  return (
+    block.isBlock &&
+    (block.isReporter || block.isBoolean) &&
+    block.children.some(child => child.isInput || child.isBlock) &&
+    (block.info.categoryIsDefault === false
+      ? block.info.category === "custom"
+      : block.info.category === "obsolete")
+  )
 }
 
 function isDefineBlock(children, lang) {
@@ -753,6 +777,10 @@ const listBlocks = {
   "hideList:": 0,
 }
 
+function callShape(block) {
+  return block.isBoolean ? "boolean" : block.isReporter ? "reporter" : "stack"
+}
+
 function recogniseStuff(scripts) {
   const customBlocksByHash = Object.create(null)
   const listNames = new Set()
@@ -775,7 +803,12 @@ function recogniseStuff(scripts) {
 
         const names = []
         const parts = []
-        for (const child of outline.children) {
+        // A reporter or boolean prototype, found in paintBlock, holds the
+        // labels and arguments.
+        const prototype = outline.children.find(
+          child => child.isBlock && child.info.isPrototype,
+        )
+        for (const child of (prototype || outline).children) {
           if (child.isLabel) {
             parts.push(child.value.replace(/%/g, "")) // see #581 - % is a special char, as seen below, and should be removed
           } else if (child.isBlock) {
@@ -792,7 +825,10 @@ function recogniseStuff(scripts) {
 
             const name = blockName(child)
             names.push(name)
-            customArgs.add(name)
+            // An argument with inputs in it has no name to match.
+            if (name !== undefined) {
+              customArgs.add(name)
+            }
           }
         }
         const spec = parts.join(" ")
@@ -801,6 +837,8 @@ function recogniseStuff(scripts) {
         const info = {
           spec: spec,
           names: names,
+          // Only a reporter or boolean call can use a prototype.
+          shape: prototype && callShape(prototype),
         }
         if (!customBlocksByHash[hash]) {
           customBlocksByHash[hash] = info
@@ -846,7 +884,7 @@ function recogniseStuff(scripts) {
       ) {
         // custom blocks
         const info = customBlocksByHash[block.info.hash]
-        if (info) {
+        if (info && (!info.shape || info.shape === callShape(block))) {
           block.info.id = "PROCEDURES_CALL"
           block.info.selector = "call"
           block.info.call = info.spec
