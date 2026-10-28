@@ -150,7 +150,10 @@ function normalizeBlock(def, pack, packCategories, packShapes) {
   // script under a hat, as in `when I receive [x v] with (points)`.
   const args = def.arguments == null ? [] : def.arguments
   const specInputs = def.spec.match(inputPatGlobal) || []
-  if (!Array.isArray(args) || !args.every(n => specInputs.includes(`%${n}`))) {
+  if (
+    !Array.isArray(args) ||
+    !args.every(n => Number.isInteger(n) && specInputs.includes(`%${n}`))
+  ) {
     throw new Error(
       `Invalid arguments ${JSON.stringify(def.arguments)} for block '${id}'`,
     )

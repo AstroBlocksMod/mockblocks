@@ -196,7 +196,7 @@ describe("registerPack", () => {
   })
 
   test("rejects arguments that are not inputs of the spec", () => {
-    for (const args of [[3], "1", [0]]) {
+    for (const args of [[3], "1", [0], ["2"]]) {
       expect(() =>
         registerPack({
           name: "bad-arguments",
@@ -227,6 +227,75 @@ describe("registerPack", () => {
     ).toThrow(/Unknown argument category/)
     expect(registeredPacks["bad-arguments"]).toBeUndefined()
     expect(registeredPacks["bad-argument-category"]).toBeUndefined()
+  })
+
+  describe("block arguments", () => {
+    beforeAll(() => {
+      registerPack({
+        name: "scopes",
+        blocks: [
+          {
+            id: "scopes.with",
+            spec: "with %1",
+            shape: "hat c",
+            category: "events",
+            arguments: [1],
+          },
+          {
+            id: "scopes.lambda",
+            spec: "lambda %1 %2",
+            shape: "reporter",
+            category: "operators",
+            arguments: [1],
+          },
+          {
+            id: "scopes.get",
+            spec: "when I get %1 with %2",
+            shape: "hat",
+            category: "sensing",
+            arguments: [2],
+          },
+        ],
+        aliases: { "with %2 when I get %1": "scopes.get" },
+      })
+    })
+
+    const categoriesOf = (script, name) => {
+      const found = []
+      const walk = x => {
+        if (x.isScript) {
+          x.blocks.forEach(walk)
+        } else if (x.isBlock) {
+          if (x.isReporter && x.children.map(c => c.value).join(" ") === name) {
+            found.push(x.info.category)
+          }
+          x.children.forEach(walk)
+        }
+      }
+      walk(script)
+      return found
+    }
+
+    test("an inner argument hides an outer one inside a body", () => {
+      const s = parseScript(`with (x)
+  say (lambda (x) (x))
+  say (x)
+end`)
+      expect(categoriesOf(s, "x")).toEqual([
+        "events",
+        "operators",
+        "operators",
+        "events",
+      ])
+    })
+
+    test("an alias with its inputs in another order", () => {
+      const s = parseScript(`with (value) when I get [thing]
+say (value)`)
+      expect(s.blocks[0].info.id).toBe("scopes.get")
+      expect(categoriesOf(s, "value")).toEqual(["sensing", "sensing"])
+      expect(categoriesOf(s, "thing")).toEqual([])
+    })
   })
 
   test.each(["hat", "cap", "loop", "reset", "gray", "pen", "wedo2"])(

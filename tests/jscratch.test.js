@@ -5,6 +5,10 @@ import {
   allBlocks,
 } from "../syntax/index.js"
 import { hashSpec } from "../syntax/blocks.js"
+import { loadLanguages, allLanguages } from "../syntax/index.js"
+import de from "../locales/de.json" with { type: "json" }
+
+loadLanguages({ de })
 
 function parseScript(code) {
   const doc = parse(code)
@@ -333,6 +337,39 @@ say (function (x) (x))`)
     const s = parseScript(`when I receive [score v] with (points :: looks)
 say (points)`)
     expect(categoryOf(s, "points")).toEqual(["looks", "looks"])
+  })
+
+  test("an argument's hex color reaches its uses", () => {
+    const s = parseScript(`when I receive [score v] with (points :: #ff0000)
+say (points)`)
+    const say = s.blocks[1].children[1]
+    expect(say.info).toMatchObject({ category: "", color: "#ff0000" })
+    expect(say.stringify()).toBe("(points :: #ff0000)")
+  })
+
+  test("a hat's arguments end with the body it is in, or the next hat", () => {
+    const s = parseScript(`class [A]
+  when I receive [s v] with (p)
+  say (p)
+  method [m]
+    say (p)
+  end
+end
+say (p)`)
+    expect(categoryOf(s, "p")).toEqual([
+      "events",
+      "events",
+      "variables",
+      "variables",
+    ])
+  })
+
+  test("translating keeps arguments that have a pack color", () => {
+    const doc = parse(`when I receive [s v] with (answer)
+say (answer)`)
+    doc.translate(allLanguages.de)
+    expect(doc.stringify()).toBe(`when I receive [s v] with (answer :: events)
+sage (answer :: events)`)
   })
 
   test("arguments print as overrides and parse back the same", () => {
