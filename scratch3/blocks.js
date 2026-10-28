@@ -364,6 +364,11 @@ class BlockView {
     }
 
     if (this.isReporter) {
+      // A reporter that holds stack blocks, such as a lambda, would get huge
+      // rounded ends as a pill, so it is drawn like a ring around a script.
+      if (this.children.some(child => child.isScript || child.isCommand)) {
+        return SVG.roundRect(w, h, props)
+      }
       return SVG.pillRect(w, h, props)
     }
     if (this.isBoolean) {

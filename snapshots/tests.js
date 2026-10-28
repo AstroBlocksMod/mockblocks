@@ -919,3 +919,19 @@ define macro [bounce]
 if on edge, bounce
 `,
 )
+
+// mockblocks: a reporter that holds stack blocks is a rounded rectangle
+
+test(
+  "en-jscratch-lambdas",
+  `
+set [on win v] to (function (name) {
+say (join [You win, ] (name))
+play sound (fanfare v) until done
+})
+
+after (2) seconds run (function {clear graphic effects})
+
+set [double v] to (function (x) ((x) * (2)))
+`,
+)
