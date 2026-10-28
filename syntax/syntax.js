@@ -27,6 +27,9 @@ import {
   iconPat,
   blockName,
   aliasCategories,
+  blocksById,
+  parseSpec,
+  parseInputNumber,
 } from "./blocks.js"
 import { resolveShape } from "./shapes.js"
 
@@ -781,16 +784,85 @@ function callShape(block) {
   return block.isBoolean ? "boolean" : block.isReporter ? "reporter" : "stack"
 }
 
+// A block whose color can still be changed to an argument's: one with no
+// override, or one that was colored as an argument of an outer scope.
+function canColorArgument(block) {
+  return block.info.categoryIsDefault || block.info.selector === "getParam"
+}
+
+function colorArgument(block, category) {
+  block.info.category = category
+  block.info.categoryIsDefault = false
+  block.info.selector = "getParam"
+}
+
+// The reporters in the inputs a pack block lists in `arguments`, such as
+// `(points)` in `when I receive [score v] with (points)`.
+function argumentBlocks(block) {
+  const type = blocksById[block.info.id]
+  if (!type || !type.arguments.length || !block.info.language) {
+    return []
+  }
+  const spec = block.info.language.commands[type.id]
+  if (!spec) {
+    return []
+  }
+  const order = parseSpec(spec).inputs.map(parseInputNumber)
+  const inputs = block.children.filter(child => !child.isLabel && !child.isIcon)
+  return type.arguments
+    .map(n => inputs[order.indexOf(n)])
+    .filter(
+      child =>
+        child &&
+        child.isBlock &&
+        (child.isReporter || child.isBoolean) &&
+        blockName(child) !== undefined,
+    )
+}
+
 function recogniseStuff(scripts) {
   const customBlocksByHash = Object.create(null)
   const listNames = new Set()
 
   scripts.forEach(script => {
-    const customArgs = new Set()
+    // Argument names in scope for the rest of the script, and their colors.
+    const customArgs = new Map()
 
     eachBlock(script, block => {
       if (!block.isBlock) {
         return
+      }
+
+      // Arguments of pack blocks. They can be used inside the block, such as
+      // in a lambda's body, and under a hat they can be used in the rest of
+      // the script. The block's inputs were visited before the block itself,
+      // so they are colored here.
+      const args = argumentBlocks(block)
+      if (args.length) {
+        const category = blocksById[block.info.id].argumentCategory
+        const names = new Map()
+        for (const arg of args) {
+          if (canColorArgument(arg)) {
+            colorArgument(arg, category)
+          }
+          names.set(blockName(arg), arg.info.category)
+        }
+        eachBlock(block, child => {
+          if (
+            child.isBlock &&
+            !args.includes(child) &&
+            (child.isReporter || child.isBoolean) &&
+            canColorArgument(child) &&
+            names.has(blockName(child))
+          ) {
+            colorArgument(child, names.get(blockName(child)))
+          }
+        })
+        if (block.isHat) {
+          for (const [name, color] of names) {
+            customArgs.set(name, color)
+          }
+        }
       }
 
       // custom blocks
@@ -827,7 +899,7 @@ function recogniseStuff(scripts) {
             names.push(name)
             // An argument with inputs in it has no name to match.
             if (name !== undefined) {
-              customArgs.add(name)
+              customArgs.set(name, "custom-arg")
             }
           }
         }
@@ -856,9 +928,7 @@ function recogniseStuff(scripts) {
       ) {
         const name = blockName(block)
         if (customArgs.has(name)) {
-          block.info.category = "custom-arg"
-          block.info.categoryIsDefault = false
-          block.info.selector = "getParam"
+          colorArgument(block, customArgs.get(name))
         }
 
         // list names

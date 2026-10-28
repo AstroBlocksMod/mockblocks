@@ -190,6 +190,17 @@ mockblocks.registerPack(mockblocks.packs.jscratch)
 
 `spec` uses `%1`, `%2` and so on for inputs, with the input kinds in `inputs` (`%s` string, `%n` number, `%b` boolean, `%m.name` dropdown). Registration is all or nothing: an invalid category, shape or block throws and nothing is registered. The built-in Scratch blocks are the `scratch` pack, available as `mockblocks.packs.scratch`.
 
+A block can name arguments, the way a `define` hat does. `arguments` lists the inputs that hold them, by number, and `argumentCategory` picks their color (the block's own category if it is left out). Uses of the same name inside the block get that color too, and so do uses in the rest of the script when the block is a hat:
+
+```js
+{ id: "net.receive", spec: "when I receive %1 with %2", inputs: ["%m.broadcast", "%s"], shape: "hat", category: "events", arguments: [2] }
+```
+
+```
+when I receive [score v] with (points)
+change [score v] by (points)
+```
+
 ## ESM
 
 The ESM build (`build/mockblocks.min.es.js`) default-exports the `mockblocks` object instead of defining `window.mockblocks`. The ESM translation files default-export a function that loads the translations:

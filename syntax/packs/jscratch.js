@@ -108,8 +108,9 @@ export default {
     },
 
     // Lambdas: functions made inline from a reporter or a stack of blocks. The
-    // last input is the body and the ones before it are the arguments. A spec
-    // cannot take a varying number of inputs, so there is one per count.
+    // last input is the body and the ones before it are the arguments, which
+    // get the custom block argument color. A spec cannot take a varying number
+    // of inputs, so there is one per count.
     {
       id: "jscratch.function",
       spec: "function %1",
@@ -123,6 +124,8 @@ export default {
       inputs: ["%s", "%s"],
       shape: "reporter",
       category: "custom",
+      arguments: [1],
+      argumentCategory: "custom-arg",
     },
     {
       id: "jscratch.function2",
@@ -130,6 +133,8 @@ export default {
       inputs: ["%s", "%s", "%s"],
       shape: "reporter",
       category: "custom",
+      arguments: [1, 2],
+      argumentCategory: "custom-arg",
     },
     {
       id: "jscratch.callFunction",
@@ -249,7 +254,8 @@ export default {
     },
 
     // Broadcasts with data, and clones that get a value from the script that
-    // created them.
+    // created them. The hats name the value, and the name takes the hat's
+    // color in the rest of the script.
     {
       id: "jscratch.broadcastWith",
       spec: "broadcast %1 with %2",
@@ -270,6 +276,7 @@ export default {
       inputs: ["%m.broadcast", "%s"],
       shape: "hat",
       category: "events",
+      arguments: [2],
     },
     {
       id: "jscratch.createCloneWith",
@@ -284,6 +291,7 @@ export default {
       inputs: ["%s"],
       shape: "hat",
       category: "control",
+      arguments: [1],
     },
   ],
 }

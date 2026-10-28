@@ -271,3 +271,76 @@ describe("jscratch pack: Scratch blocks", () => {
     expect(taken.map(b => b.spec)).toEqual([])
   })
 })
+
+describe("jscratch pack: arguments", () => {
+  function categoryOf(script, name) {
+    const found = []
+    const walk = x => {
+      if (x.isScript) {
+        x.blocks.forEach(walk)
+      } else if (x.isBlock) {
+        if (x.isReporter && x.children.map(c => c.value).join(" ") === name) {
+          found.push(x.info.category)
+        }
+        x.children.forEach(walk)
+      }
+    }
+    walk(script)
+    return found
+  }
+
+  test("a hat's argument takes its color in the rest of the script", () => {
+    const s = parseScript(`when I receive [score v] with (points)
+change [score v] by (points)`)
+    expect(categoryOf(s, "points")).toEqual(["events", "events"])
+    const clone = parseScript(`when I start as a clone with (start x)
+go to x (start x) y (0)`)
+    expect(categoryOf(clone, "start x")).toEqual(["control", "control"])
+  })
+
+  test("a hat's argument does not reach other scripts", () => {
+    const doc = parse(`when I receive [score v] with (points)
+say (points)
+
+when flag clicked
+say (points)`)
+    expect(categoryOf(doc.scripts[1], "points")).toEqual(["variables"])
+  })
+
+  test("a lambda's arguments only reach its body", () => {
+    const s = parseScript(`set [f v] to (function (x) ((x) * (2)))
+say (x)`)
+    expect(categoryOf(s, "x")).toEqual([
+      "custom-arg",
+      "custom-arg",
+      "variables",
+    ])
+  })
+
+  test("a lambda can use the arguments of the hat it is under", () => {
+    const s = parseScript(`when I receive [hit v] with (damage)
+set [f v] to (function (x) ((x) * (damage)))`)
+    expect(categoryOf(s, "damage")).toEqual(["events", "events"])
+  })
+
+  test("a lambda's argument hides a hat argument with the same name", () => {
+    const s = parseScript(`when I receive [hit v] with (x)
+say (function (x) (x))`)
+    expect(categoryOf(s, "x")).toEqual(["events", "custom-arg", "custom-arg"])
+  })
+
+  test("arguments with their own override keep it", () => {
+    const s = parseScript(`when I receive [score v] with (points :: looks)
+say (points)`)
+    expect(categoryOf(s, "points")).toEqual(["looks", "looks"])
+  })
+
+  test("arguments print as overrides and parse back the same", () => {
+    const code = `when I receive [score v] with (points)
+say (function (x) ((x) + (points)))`
+    const once = parse(code).stringify()
+    expect(once).toBe(`when I receive [score v] with (points :: events)
+say (function (x :: custom-arg) ((x :: custom-arg) + (points :: events)))`)
+    expect(parse(once).stringify()).toBe(once)
+  })
+})

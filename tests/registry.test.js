@@ -195,6 +195,40 @@ describe("registerPack", () => {
     ).toThrow(/Invalid category name/)
   })
 
+  test("rejects arguments that are not inputs of the spec", () => {
+    for (const args of [[3], "1", [0]]) {
+      expect(() =>
+        registerPack({
+          name: "bad-arguments",
+          blocks: [
+            {
+              spec: "when %1 with %2",
+              category: "events",
+              shape: "hat",
+              arguments: args,
+            },
+          ],
+        }),
+      ).toThrow(/Invalid arguments/)
+    }
+    expect(() =>
+      registerPack({
+        name: "bad-argument-category",
+        blocks: [
+          {
+            spec: "when %1 with %2",
+            category: "events",
+            shape: "hat",
+            arguments: [2],
+            argumentCategory: "nope",
+          },
+        ],
+      }),
+    ).toThrow(/Unknown argument category/)
+    expect(registeredPacks["bad-arguments"]).toBeUndefined()
+    expect(registeredPacks["bad-argument-category"]).toBeUndefined()
+  })
+
   test.each(["hat", "cap", "loop", "reset", "gray", "pen", "wedo2"])(
     "rejects the override keyword '%s' as a category name",
     name => {
