@@ -1047,9 +1047,66 @@ say (double (3))`
       expect(say.children[1].info.category).toBe("operators")
     })
 
+    test("an empty boolean slot in a prototype is a boolean argument", () => {
+      const define = parseBlock("define <<> is big>")
+      const prototype = define.children.find(child => child.isOutline)
+        .children[0]
+      const slot = prototype.children.find(
+        child => child.isBlock && child.info.argument === "boolean",
+      )
+      expect(define.info.call).toBe("%b is big")
+      expect(slot.info.category).toBe("custom-arg")
+    })
+
     test("round trip", () => {
       const text = "define (double (n :: custom-arg))"
       expect(parseBlock(text).stringify()).toBe(text)
+    })
+
+    test("a reporter beside other words is still one argument", () => {
+      const [define, call] = parseScript(
+        "define jump (height (h))\njump (3)",
+      ).blocks
+      expect(define.info.call).toBe("jump %n")
+      expect(call.info.category).toBe("custom")
+      expect(parseBlock("define (a (x)) (b (y))").info.call).toBe("%n %n")
+    })
+
+    test("only the prototype itself is unpacked", () => {
+      const [define, say] = parseScript(
+        "define (f (g (x)))\nsay (f (1))",
+      ).blocks
+      expect(define.info).toMatchObject({
+        id: "PROCEDURES_DEFINITION",
+        call: "f %n",
+      })
+      expect(say.children[1].info.category).toBe("custom")
+    })
+
+    test(":: custom marks a prototype, even for a built-in block", () => {
+      const define = parseBlock("define (foo (n) :: custom)")
+      expect(define.info.call).toBe("foo %n")
+      const add = parseBlock("define ((a) + (b) :: custom)")
+      expect(add.info.call).toBe("%n + %n")
+      const prototype = add.children.find(child => child.isOutline).children[0]
+      expect(prototype.info.id).toBeUndefined()
+      expect(prototype.info.selector).toBeUndefined()
+    })
+
+    test("a built-in block is not a prototype by itself", () => {
+      const [define, say] = parseScript(
+        "define ((a) + (b))\nsay ((1) + (2))",
+      ).blocks
+      expect(define.info.call).toBe("%n")
+      expect(say.children[1].info.category).toBe("operators")
+    })
+
+    test("only calls of the same shape match a prototype", () => {
+      const [, stack, say] = parseScript(
+        "define (double (n))\ndouble (3)\nsay (double (3))",
+      ).blocks
+      expect(stack.info.category).toBe("obsolete")
+      expect(say.children[1].info.category).toBe("custom")
     })
   })
 })

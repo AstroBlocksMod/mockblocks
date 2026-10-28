@@ -133,11 +133,6 @@ function paintBlock(info, children, languages) {
               labels,
               languages,
             )
-          } else if (isPrototype(child)) {
-            // `define (fibonacci (n))` defines a reporter, so the reporter is
-            // the custom block itself and its inputs are the arguments.
-            child.info.category = "custom"
-            child.children = child.children.map(toArgument)
           } else if (child.isReporter || child.isBoolean) {
             // Convert variables to number arguments, predicates to boolean arguments.
             if (child.info.categoryIsDefault) {
@@ -147,12 +142,22 @@ function paintBlock(info, children, languages) {
           }
           return child
         }
-        const outlineChildren = children
-          .splice(
-            lang.definePrefix.length,
-            children.length - lang.defineSuffix.length,
-          )
-          .map(toArgument)
+        let outlineChildren = children.splice(
+          lang.definePrefix.length,
+          children.length - lang.defineSuffix.length,
+        )
+        if (outlineChildren.length === 1 && isPrototype(outlineChildren[0])) {
+          // `define (fibonacci (n))` defines a reporter, so the reporter is
+          // the custom block itself and its inputs are the arguments.
+          const prototype = outlineChildren[0]
+          prototype.info.isPrototype = true
+          prototype.info.category = "custom"
+          delete prototype.info.id
+          delete prototype.info.selector
+          prototype.children = prototype.children.map(toArgument)
+        } else {
+          outlineChildren = outlineChildren.map(toArgument)
+        }
 
         const outlineInfo = {
           shape: "outline",
@@ -191,15 +196,18 @@ function paintBlock(info, children, languages) {
   return block
 }
 
-// A reporter or boolean written in a define with inputs of its own, as in
-// `define (fibonacci (n))`. A plain `define (n)` is still one argument.
+// A reporter or boolean with inputs of its own that is all there is in a
+// define, as in `define (fibonacci (n))`. It has to be a block mockblocks does
+// not know, or be marked `:: custom`. A plain `define (n)` is still one
+// argument.
 function isPrototype(block) {
   return (
     block.isBlock &&
     (block.isReporter || block.isBoolean) &&
-    block.info.categoryIsDefault !== false &&
-    !block.info.argument &&
-    block.children.some(child => !child.isLabel)
+    block.children.some(child => child.isInput || child.isBlock) &&
+    (block.info.categoryIsDefault === false
+      ? block.info.category === "custom"
+      : block.info.category === "obsolete")
   )
 }
 
@@ -769,6 +777,10 @@ const listBlocks = {
   "hideList:": 0,
 }
 
+function callShape(block) {
+  return block.isBoolean ? "boolean" : block.isReporter ? "reporter" : "stack"
+}
+
 function recogniseStuff(scripts) {
   const customBlocksByHash = Object.create(null)
   const listNames = new Set()
@@ -791,9 +803,10 @@ function recogniseStuff(scripts) {
 
         const names = []
         const parts = []
-        // A reporter or boolean prototype holds the labels and arguments.
+        // A reporter or boolean prototype, found in paintBlock, holds the
+        // labels and arguments.
         const prototype = outline.children.find(
-          child => child.isBlock && !child.info.argument,
+          child => child.isBlock && child.info.isPrototype,
         )
         for (const child of (prototype || outline).children) {
           if (child.isLabel) {
@@ -824,6 +837,8 @@ function recogniseStuff(scripts) {
         const info = {
           spec: spec,
           names: names,
+          // Only a reporter or boolean call can use a prototype.
+          shape: prototype && callShape(prototype),
         }
         if (!customBlocksByHash[hash]) {
           customBlocksByHash[hash] = info
@@ -869,7 +884,7 @@ function recogniseStuff(scripts) {
       ) {
         // custom blocks
         const info = customBlocksByHash[block.info.hash]
-        if (info) {
+        if (info && (!info.shape || info.shape === callShape(block))) {
           block.info.id = "PROCEDURES_CALL"
           block.info.selector = "call"
           block.info.call = info.spec
