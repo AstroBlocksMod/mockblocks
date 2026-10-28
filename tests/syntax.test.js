@@ -1009,6 +1009,49 @@ describe("define hats", () => {
     const code = "define test :: cat"
     expect(parseBlock(code).stringify()).toBe(code)
   })
+
+  describe("reporter and boolean prototypes", () => {
+    const code = `define (double (n))
+say ((n) * (2))
+say <(n) < (length of [abc])>
+say (double (3))`
+
+    test("the prototype is the custom block and its inputs are arguments", () => {
+      const define = parseScript(code).blocks[0]
+      const outline = define.children.find(child => child.isOutline)
+      const prototype = outline.children[0]
+      expect(prototype.info.category).toBe("custom")
+      expect(prototype.isReporter).toBe(true)
+      expect(prototype.children[1].info).toMatchObject({
+        category: "custom-arg",
+        argument: "number",
+      })
+      expect(define.info.call).toBe("double %n")
+    })
+
+    test("other blocks keep their own categories", () => {
+      const [, times, lessThan, call] = parseScript(code).blocks
+      const product = times.children[1]
+      expect(product.info.category).toBe("operators")
+      expect(product.children[0].info.category).toBe("custom-arg")
+      const comparison = lessThan.children[1]
+      expect(comparison.info.category).toBe("operators")
+      expect(comparison.children[2].info.category).toBe("operators")
+      expect(call.children[1].info.category).toBe("custom")
+    })
+
+    test("boolean prototypes work the same way", () => {
+      const script = parseScript("define <(a) is big>\nsay <(a) > (9)>")
+      const [define, say] = script.blocks
+      expect(define.info.call).toBe("%n is big")
+      expect(say.children[1].info.category).toBe("operators")
+    })
+
+    test("round trip", () => {
+      const text = "define (double (n :: custom-arg))"
+      expect(parseBlock(text).stringify()).toBe(text)
+    })
+  })
 })
 
 describe("misc regression test", () => {
